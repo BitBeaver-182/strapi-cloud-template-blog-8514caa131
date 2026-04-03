@@ -18,6 +18,18 @@
     },
     "name": {
       "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "hsCode": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "products"
     }
   }
 }

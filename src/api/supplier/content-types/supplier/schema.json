@@ -24,6 +24,18 @@
     },
     "email": {
       "type": "email"
+    },
+    "supplierQuotes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::supplier-quote.supplier-quote",
+      "mappedBy": "supplier"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "supplier"
     }
   }
 }

@@ -11,6 +11,21 @@ export interface SharedMedia extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedMoney extends Struct.ComponentSchema {
+  collectionName: 'components_shared_monies';
+  info: {
+    description: 'Amount with currency \u2014 reuse on any content type';
+    displayName: 'Money';
+    icon: 'coins';
+    name: 'money';
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    currency: Schema.Attribute.Relation<'manyToOne', 'api::currency.currency'> &
+      Schema.Attribute.Required;
+  };
+}
+
 export interface SharedQuote extends Struct.ComponentSchema {
   collectionName: 'components_shared_quotes';
   info: {
@@ -66,6 +81,7 @@ declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
       'shared.media': SharedMedia;
+      'shared.money': SharedMoney;
       'shared.quote': SharedQuote;
       'shared.rich-text': SharedRichText;
       'shared.seo': SharedSeo;

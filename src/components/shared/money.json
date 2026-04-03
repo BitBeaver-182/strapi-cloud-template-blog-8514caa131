@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_shared_monies",
+  "info": {
+    "name": "money",
+    "icon": "coins",
+    "displayName": "Money",
+    "description": "Amount with currency — reuse on any content type"
+  },
+  "options": {},
+  "attributes": {
+    "amount": {
+      "type": "decimal",
+      "required": true
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency",
+      "required": true
+    }
+  }
+}

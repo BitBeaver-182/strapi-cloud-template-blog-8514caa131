@@ -60,6 +60,49 @@ async function setPublicPermissions(newPermissions) {
   await Promise.all(allPermissionsToCreate);
 }
 
+/**
+ * Idempotently grant Users & Permissions API actions for a role (e.g. authenticated).
+ * Used so new content types get REST permissions without manual Admin setup on each deploy.
+ */
+async function ensureRolePermissions(roleType, controller, actions) {
+  const role = await strapi.query('plugin::users-permissions.role').findOne({
+    where: { type: roleType },
+  });
+
+  if (!role) {
+    return;
+  }
+
+  for (const action of actions) {
+    const actionName = `api::${controller}.${controller}.${action}`;
+    const existing = await strapi.query('plugin::users-permissions.permission').findOne({
+      where: {
+        action: actionName,
+        role: role.id,
+      },
+    });
+
+    if (!existing) {
+      await strapi.query('plugin::users-permissions.permission').create({
+        data: {
+          action: actionName,
+          role: role.id,
+        },
+      });
+    }
+  }
+}
+
+async function ensureSupplierQuotePermissions() {
+  await ensureRolePermissions('authenticated', 'supplier-quote', [
+    'find',
+    'findOne',
+    'create',
+    'update',
+    'delete',
+  ]);
+}
+
 function getFileSizeInBytes(filePath) {
   const stats = fs.statSync(filePath);
   const fileSizeInBytes = stats['size'];
@@ -271,4 +314,5 @@ async function main() {
 
 module.exports = async () => {
   await seedExampleApp();
+  await ensureSupplierQuotePermissions();
 };

@@ -652,6 +652,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    hsCode: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -660,7 +661,53 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSupplierQuoteSupplierQuote
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'supplier_quotes';
+  info: {
+    description: 'Quotation from a supplier (not an order yet). One supplier per quote.';
+    displayName: 'Supplier Quote';
+    pluralName: 'supplier-quotes';
+    singularName: 'supplier-quote';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    attachments: Schema.Attribute.Media<'files' | 'images', true> &
+      Schema.Attribute.Required;
+    contract_no: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    destination_country: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<'plugin::country-select.country'>;
+    expiration_date: Schema.Attribute.Date;
+    incoterm: Schema.Attribute.Enumeration<['FOB', 'EXW', 'CIF', 'OTHER']>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-quote.supplier-quote'
+    > &
+      Schema.Attribute.Private;
+    origin_country: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<'plugin::country-select.country'>;
+    pi_no: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    quotation_date: Schema.Attribute.Date & Schema.Attribute.Required;
+    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'>;
+    total: Schema.Attribute.Component<'shared.money', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -691,8 +738,13 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
     name: Schema.Attribute.String;
     phone_number: Schema.Attribute.String &
       Schema.Attribute.CustomField<'plugin::strapi-phone-validator-5.phone'>;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'>;
+    supplierQuotes: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-quote.supplier-quote'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1216,6 +1268,7 @@ declare module '@strapi/strapi' {
       'api::currency.currency': ApiCurrencyCurrency;
       'api::global.global': ApiGlobalGlobal;
       'api::product.product': ApiProductProduct;
+      'api::supplier-quote.supplier-quote': ApiSupplierQuoteSupplierQuote;
       'api::supplier.supplier': ApiSupplierSupplier;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

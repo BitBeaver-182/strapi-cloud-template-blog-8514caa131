@@ -1,0 +1,68 @@
+{
+  "kind": "collectionType",
+  "collectionName": "supplier_quotes",
+  "info": {
+    "singularName": "supplier-quote",
+    "pluralName": "supplier-quotes",
+    "displayName": "Supplier Quote",
+    "description": "Quotation from a supplier (not an order yet). One supplier per quote."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "supplier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "supplierQuotes"
+    },
+    "contract_no": {
+      "type": "string"
+    },
+    "pi_no": {
+      "type": "string"
+    },
+    "quotation_date": {
+      "type": "date",
+      "required": true
+    },
+    "expiration_date": {
+      "type": "date"
+    },
+    "origin_country": {
+      "type": "customField",
+      "customField": "plugin::country-select.country",
+      "required": true
+    },
+    "destination_country": {
+      "type": "customField",
+      "customField": "plugin::country-select.country",
+      "required": true
+    },
+    "incoterm": {
+      "type": "enumeration",
+      "enum": [
+        "FOB",
+        "EXW",
+        "CIF",
+        "OTHER"
+      ]
+    },
+    "total": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
+    },
+    "attachments": {
+      "type": "media",
+      "multiple": true,
+      "required": true,
+      "allowedTypes": [
+        "files",
+        "images"
+      ]
+    }
+  }
+}
