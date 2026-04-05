@@ -833,28 +833,31 @@ export interface ApiQuoteQuote extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    attachments: Schema.Attribute.Media<'files' | 'images', true> &
-      Schema.Attribute.Required;
+    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    attachments: Schema.Attribute.Media<'files' | 'images', true>;
     contract_no: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     destination_country: Schema.Attribute.String &
-      Schema.Attribute.Required &
       Schema.Attribute.CustomField<'plugin::country-select.country'>;
-    expiration_date: Schema.Attribute.Date;
+    expiration_date: Schema.Attribute.Date & Schema.Attribute.Required;
     incoterm: Schema.Attribute.Enumeration<['FOB', 'EXW', 'CIF', 'OTHER']>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'> &
       Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
     orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
     origin_country: Schema.Attribute.String &
-      Schema.Attribute.Required &
       Schema.Attribute.CustomField<'plugin::country-select.country'>;
+    pdf: Schema.Attribute.Media<'files'>;
     pi_no: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     quotation_date: Schema.Attribute.Date & Schema.Attribute.Required;
-    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'>;
+    status: Schema.Attribute.Enumeration<['pending', 'accepted', 'rejected']> &
+      Schema.Attribute.DefaultTo<'pending'>;
+    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'> &
+      Schema.Attribute.Required;
     total: Schema.Attribute.Component<'shared.money', false>;
     total_display: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -871,7 +874,7 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
     singularName: 'supplier';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     address: Schema.Attribute.Text;
@@ -885,13 +888,15 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
       'api::supplier.supplier'
     > &
       Schema.Attribute.Private;
-    name: Schema.Attribute.String;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     phone_number: Schema.Attribute.String &
       Schema.Attribute.CustomField<'plugin::strapi-phone-validator-5.phone'>;
     products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     quotes: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'>;
-    slug: Schema.Attribute.UID<'name'>;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Unique;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

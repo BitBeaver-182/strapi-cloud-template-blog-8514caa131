@@ -7,16 +7,19 @@
     "displayName": "Supplier"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
     "slug": {
       "type": "uid",
-      "targetField": "name"
+      "targetField": "name",
+      "unique": true
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "required": true,
+      "unique": true
     },
     "phone_number": {
       "type": "customField",

@@ -1,5 +1,6 @@
 'use strict';
 
+const { registerSupplierPhoneValidation } = require('./register-supplier-phone-validation');
 const fs = require('fs-extra');
 const path = require('path');
 const mime = require('mime-types');
@@ -94,6 +95,13 @@ async function ensureRolePermissions(roleType, controller, actions) {
 }
 
 async function ensureBusinessPermissions() {
+  await ensureRolePermissions('authenticated', 'supplier', [
+    'find',
+    'findOne',
+    'create',
+    'update',
+    'delete',
+  ]);
   await ensureRolePermissions('authenticated', 'quote', [
     'find',
     'findOne',
@@ -333,7 +341,8 @@ async function main() {
 }
 
 
-module.exports = async () => {
+module.exports = async ({ strapi }) => {
+  registerSupplierPhoneValidation(strapi);
   await seedExampleApp();
   await ensureBusinessPermissions();
 };
