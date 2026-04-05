@@ -2,4 +2,4 @@
 
 const { createCoreService } = require('@strapi/strapi').factories;
 
-module.exports = createCoreService('api::supplier-quote.supplier-quote');
+module.exports = createCoreService('api::payment.payment');

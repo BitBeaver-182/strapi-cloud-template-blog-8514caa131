@@ -25,10 +25,16 @@
     "email": {
       "type": "email"
     },
-    "supplierQuotes": {
+    "address": {
+      "type": "text"
+    },
+    "website": {
+      "type": "string"
+    },
+    "quotes": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::supplier-quote.supplier-quote",
+      "target": "api::quote.quote",
       "mappedBy": "supplier"
     },
     "products": {

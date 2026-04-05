@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Order",
+    "description": "Accepted quote / deal. Line items and invoices attach here."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "quote": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::quote.quote",
+      "inversedBy": "orders"
+    },
+    "notes": {
+      "type": "text"
+    },
+    "lines": {
+      "type": "component",
+      "component": "order.order-line",
+      "repeatable": true
+    },
+    "order_status": {
+      "type": "enumeration",
+      "required": false,
+      "default": "pending",
+      "enum": [
+        "pending",
+        "partially_paid",
+        "paid"
+      ]
+    },
+    "total": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
+    },
+    "amount_paid": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
+    },
+    "invoices": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::invoice.invoice",
+      "mappedBy": "order"
+    }
+  }
+}

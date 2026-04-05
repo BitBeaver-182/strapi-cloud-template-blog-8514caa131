@@ -1,11 +1,11 @@
 {
   "kind": "collectionType",
-  "collectionName": "supplier_quotes",
+  "collectionName": "quotes",
   "info": {
-    "singularName": "supplier-quote",
-    "pluralName": "supplier-quotes",
-    "displayName": "Supplier Quote",
-    "description": "Quotation from a supplier (not an order yet). One supplier per quote."
+    "singularName": "quote",
+    "pluralName": "quotes",
+    "displayName": "Quote",
+    "description": "Supplier quotation (commercial anchor). One supplier per quote."
   },
   "options": {
     "draftAndPublish": true
@@ -16,7 +16,7 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::supplier.supplier",
-      "inversedBy": "supplierQuotes"
+      "inversedBy": "quotes"
     },
     "contract_no": {
       "type": "string"
@@ -52,8 +52,12 @@
     },
     "total": {
       "type": "component",
-      "component": "shared.money",
-      "repeatable": false
+      "repeatable": false,
+      "component": "shared.money"
+    },
+    "total_display": {
+      "type": "string",
+      "description": "Auto-filled from Total for list view (symbol + amount using currency decimals)."
     },
     "attachments": {
       "type": "media",
@@ -63,6 +67,12 @@
         "files",
         "images"
       ]
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "quote"
     }
   }
 }

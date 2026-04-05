@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "payments",
+  "info": {
+    "singularName": "payment",
+    "pluralName": "payments",
+    "displayName": "Payment",
+    "description": "Bank movement (e.g. EUR) with invoice-equivalent amount in invoice currency"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "invoice": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::invoice.invoice",
+      "inversedBy": "payments"
+    },
+    "bank_payment": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.money",
+      "required": true
+    },
+    "invoice_equivalent": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.money",
+      "required": true
+    },
+    "fx_rate": {
+      "type": "decimal",
+      "min": 0
+    },
+    "fx_pair": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "fx_notes": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "success",
+        "failed"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "provider_txn_id": {
+      "type": "string"
+    }
+  }
+}

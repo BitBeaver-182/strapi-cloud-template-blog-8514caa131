@@ -93,8 +93,29 @@ async function ensureRolePermissions(roleType, controller, actions) {
   }
 }
 
-async function ensureSupplierQuotePermissions() {
-  await ensureRolePermissions('authenticated', 'supplier-quote', [
+async function ensureBusinessPermissions() {
+  await ensureRolePermissions('authenticated', 'quote', [
+    'find',
+    'findOne',
+    'create',
+    'update',
+    'delete',
+  ]);
+  await ensureRolePermissions('authenticated', 'order', [
+    'find',
+    'findOne',
+    'create',
+    'update',
+    'delete',
+  ]);
+  await ensureRolePermissions('authenticated', 'invoice', [
+    'find',
+    'findOne',
+    'create',
+    'update',
+    'delete',
+  ]);
+  await ensureRolePermissions('authenticated', 'payment', [
     'find',
     'findOne',
     'create',
@@ -314,5 +335,5 @@ async function main() {
 
 module.exports = async () => {
   await seedExampleApp();
-  await ensureSupplierQuotePermissions();
+  await ensureBusinessPermissions();
 };

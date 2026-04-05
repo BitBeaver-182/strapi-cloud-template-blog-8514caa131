@@ -2,4 +2,4 @@
 
 const { createCoreController } = require('@strapi/strapi').factories;
 
-module.exports = createCoreController('api::supplier-quote.supplier-quote');
+module.exports = createCoreController('api::order.order');

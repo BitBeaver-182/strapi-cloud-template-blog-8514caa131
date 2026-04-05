@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "invoices",
+  "info": {
+    "singularName": "invoice",
+    "pluralName": "invoices",
+    "displayName": "Invoice",
+    "description": "Payable document (supplier, customs, logistics, etc.)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "invoices"
+    },
+    "vendor_name": {
+      "type": "string",
+      "required": true
+    },
+    "total": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false,
+      "required": true
+    },
+    "amount_paid": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0
+    },
+    "invoice_status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "pending",
+      "enum": [
+        "pending",
+        "partially_paid",
+        "paid"
+      ]
+    },
+    "due_date": {
+      "type": "date"
+    },
+    "payments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::payment.payment",
+      "mappedBy": "invoice"
+    }
+  }
+}

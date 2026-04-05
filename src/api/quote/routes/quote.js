@@ -2,4 +2,4 @@
 
 const { createCoreRouter } = require('@strapi/strapi').factories;
 
-module.exports = createCoreRouter('api::supplier-quote.supplier-quote');
+module.exports = createCoreRouter('api::quote.quote');

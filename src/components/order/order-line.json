@@ -1,0 +1,34 @@
+{
+  "collectionName": "components_order_order_lines",
+  "info": {
+    "name": "order-line",
+    "icon": "layer",
+    "displayName": "Order line",
+    "description": "Product line on an order"
+  },
+  "options": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "quantity": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "default": 1
+    },
+    "unit_price": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.money",
+      "required": true
+    },
+    "line_total": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.money"
+    }
+  }
+}
