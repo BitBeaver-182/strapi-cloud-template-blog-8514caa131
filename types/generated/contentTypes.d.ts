@@ -856,8 +856,7 @@ export interface ApiQuoteQuote extends Struct.CollectionTypeSchema {
     quotation_date: Schema.Attribute.Date & Schema.Attribute.Required;
     status: Schema.Attribute.Enumeration<['pending', 'accepted', 'rejected']> &
       Schema.Attribute.DefaultTo<'pending'>;
-    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'> &
-      Schema.Attribute.Required;
+    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'>;
     total: Schema.Attribute.Component<'shared.money', false>;
     total_display: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -890,13 +889,16 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 3;
+      }>;
     phone_number: Schema.Attribute.String &
       Schema.Attribute.CustomField<'plugin::strapi-phone-validator-5.phone'>;
     products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     quotes: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'>;
-    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Unique;
+    slug: Schema.Attribute.UID<'name'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

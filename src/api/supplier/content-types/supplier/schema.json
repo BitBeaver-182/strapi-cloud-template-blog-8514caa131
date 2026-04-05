@@ -13,11 +13,11 @@
   "attributes": {
     "slug": {
       "type": "uid",
-      "targetField": "name",
-      "unique": true
+      "targetField": "name"
     },
     "name": {
       "type": "string",
+      "minLength": 3,
       "required": true,
       "unique": true
     },
