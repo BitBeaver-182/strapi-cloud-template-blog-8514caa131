@@ -2,6 +2,7 @@ import type { Core } from '@strapi/strapi';
 
 const config: Core.Config.Middlewares = [
   'strapi::logger',
+  'global::errors-parser',
   'strapi::errors',
   'strapi::cors',
   'strapi::poweredBy',
