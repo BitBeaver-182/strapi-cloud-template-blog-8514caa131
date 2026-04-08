@@ -62,6 +62,6 @@ const MESSAGE_MAP: Array<[RegExp, string]> = [
 
 
 type ValidationError = {
-  key: string;
+  key: string | null;
   params?: Record<string, any>;
 };
