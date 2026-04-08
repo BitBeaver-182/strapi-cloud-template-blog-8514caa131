@@ -8,7 +8,7 @@
     "description": "Supplier quotation (commercial anchor). One supplier per quote."
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -29,17 +29,16 @@
       "required": true
     },
     "expiration_date": {
-      "type": "date"
+      "type": "date",
+      "required": true
     },
     "origin_country": {
       "type": "customField",
-      "customField": "plugin::country-select.country",
-      "required": true
+      "customField": "plugin::country-select.country"
     },
     "destination_country": {
       "type": "customField",
-      "customField": "plugin::country-select.country",
-      "required": true
+      "customField": "plugin::country-select.country"
     },
     "incoterm": {
       "type": "enumeration",
@@ -50,22 +49,45 @@
         "OTHER"
       ]
     },
+    "amount": {
+      "type": "decimal",
+      "required": true
+    },
+    "notes": {
+      "type": "text"
+    },
+    "quote_status": {
+      "type": "enumeration",
+      "default": "pending",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ]
+    },
     "total": {
       "type": "component",
-      "repeatable": false,
-      "component": "shared.money"
+      "component": "shared.money",
+      "repeatable": false
     },
     "total_display": {
-      "type": "string",
-      "description": "Auto-filled from Total for list view (symbol + amount using currency decimals)."
+      "type": "string"
     },
     "attachments": {
       "type": "media",
       "multiple": true,
-      "required": true,
+      "required": false,
       "allowedTypes": [
         "files",
         "images"
+      ]
+    },
+    "pdf": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "files"
       ]
     },
     "orders": {
