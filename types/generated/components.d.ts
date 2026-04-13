@@ -34,8 +34,12 @@ export interface SharedMoney extends Struct.ComponentSchema {
   };
   attributes: {
     amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    currency: Schema.Attribute.Relation<'manyToOne', 'api::currency.currency'> &
-      Schema.Attribute.Required;
+    currency_code: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 3;
+        minLength: 3;
+      }>;
   };
 }
 

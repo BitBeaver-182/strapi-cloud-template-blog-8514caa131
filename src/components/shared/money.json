@@ -12,11 +12,11 @@
       "type": "decimal",
       "required": true
     },
-    "currency": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::currency.currency",
-      "required": true
+    "currency_code": {
+      "type": "string",
+      "required": true,
+      "minLength": 3,
+      "maxLength": 3
     }
   }
 }
