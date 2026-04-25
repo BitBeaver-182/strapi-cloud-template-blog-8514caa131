@@ -677,9 +677,9 @@ export interface ApiSupplierInvoiceSupplierInvoice
     expirationDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
     invoiceNumber: Schema.Attribute.String & Schema.Attribute.Unique;
     invoiceStatus: Schema.Attribute.Enumeration<
-      ['draft', 'sent', 'paid', 'overdue', 'cancelled']
+      ['pending', 'paid', 'overdue']
     > &
-      Schema.Attribute.DefaultTo<'draft'>;
+      Schema.Attribute.DefaultTo<'pending'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -770,10 +770,10 @@ export interface ApiSupplierOrderSupplierOrder
     > &
       Schema.Attribute.Private;
     orderStatus: Schema.Attribute.Enumeration<
-      ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+      ['draft', 'processing', 'shipped', 'delivered', 'cancelled']
     > &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pending'>;
+      Schema.Attribute.DefaultTo<'draft'>;
     publishedAt: Schema.Attribute.DateTime;
     quote: Schema.Attribute.Relation<'manyToOne', 'api::quote.quote'> &
       Schema.Attribute.Required;

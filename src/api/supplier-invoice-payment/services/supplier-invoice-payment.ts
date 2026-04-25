@@ -5,12 +5,35 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { ensureRowDocumentId } from '../../../utils/ensure-document-id';
+import { SUPPLIER_INVOICE_PAYMENT_UID } from '../constants';
+import { SUPPLIER_INVOICE_UID } from '../../supplier-invoice/constants';
 
-const PAYMENT_UID = 'api::supplier-invoice-payment.supplier-invoice-payment';
-const INVOICE_UID = 'api::supplier-invoice.supplier-invoice';
+
 const SUPPLIER_ORDER_UID = 'api::supplier-order.supplier-order';
 
 type Money = { amount: number; currency_code: string };
+type PaymentMethod = 'wire' | 'card' | 'cash' | 'check' | 'other';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isPaymentMethod(value: unknown): value is PaymentMethod {
+  return value === 'wire' || value === 'card' || value === 'cash' || value === 'check' || value === 'other';
+}
+
+function toIsoString(value: unknown): string | null {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+  }
+  return null;
+}
 
 function roundMoney(value: unknown) {
   const n = Number(value);
@@ -20,8 +43,8 @@ function roundMoney(value: unknown) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-function normalizeMoney(m: any): Money | null {
-  if (m == null) {
+function normalizeMoney(m: unknown): Money | null {
+  if (!isRecord(m)) {
     return null;
   }
   const code = m.currency_code;
@@ -34,14 +57,14 @@ function normalizeMoney(m: any): Money | null {
   };
 }
 
-function extractRelationRef(value: any): string | number | null {
+function extractRelationRef(value: unknown): string | number | null {
   if (value == null) {
     return null;
   }
   if (typeof value === 'number' || typeof value === 'string') {
     return value;
   }
-  if (typeof value !== 'object') {
+  if (!isRecord(value)) {
     return null;
   }
   if (value.documentId != null) {
@@ -89,20 +112,20 @@ async function findInvoiceDocument(
   }
 
   if (typeof ref === 'number' || (typeof ref === 'string' && /^\d+$/.test(String(ref)))) {
-    const row = await strapi.db.query(INVOICE_UID).findOne({
+    const row = await strapi.db.query(SUPPLIER_INVOICE_UID).findOne({
       where: { id: Number(ref) },
     });
-    const did = await ensureRowDocumentId(strapi, INVOICE_UID, row);
+    const did = await ensureRowDocumentId(strapi, SUPPLIER_INVOICE_UID, row);
     if (!did) {
       return null;
     }
-    return (strapi as any).documents(INVOICE_UID).findOne({
+    return strapi.documents(SUPPLIER_INVOICE_UID).findOne({
       documentId: did,
       populate: { supplierOrder: true, total: true },
     });
   }
 
-  return (strapi as any).documents(INVOICE_UID).findOne({
+  return strapi.documents(SUPPLIER_INVOICE_UID).findOne({
     documentId: String(ref),
     populate: { supplierOrder: true, total: true },
   });
@@ -136,7 +159,7 @@ async function normalizeInvoiceForHistory(strapi: any, invoice: any) {
   if (!invoice) {
     return null;
   }
-  const invoiceDocumentId = await ensureRowDocumentId(strapi, INVOICE_UID, invoice);
+  const invoiceDocumentId = await ensureRowDocumentId(strapi, SUPPLIER_INVOICE_UID, invoice);
   const soRow = invoice.supplierOrder;
   const supplierOrderDocumentId = soRow
     ? await ensureRowDocumentId(strapi, SUPPLIER_ORDER_UID, soRow)
@@ -152,7 +175,7 @@ async function normalizeInvoiceForHistory(strapi: any, invoice: any) {
 }
 
 async function findPayment(strapi: any, documentId: string) {
-  return strapi.documents(PAYMENT_UID).findOne({
+  return strapi.documents(SUPPLIER_INVOICE_PAYMENT_UID).findOne({
     documentId,
     populate: {
       invoice: {
@@ -163,9 +186,15 @@ async function findPayment(strapi: any, documentId: string) {
 }
 
 async function refreshInvoiceTotals(strapi: any, invoiceDocumentId: string) {
-  return (strapi.service('api::supplier-invoice.supplier-invoice') as any).refreshPaymentTotals(
-    invoiceDocumentId,
-  );
+  const svc = strapi.service('api::supplier-invoice.supplier-invoice');
+  if (
+    typeof svc !== 'object' ||
+    svc === null ||
+    typeof Reflect.get(svc, 'refreshPaymentTotals') !== 'function'
+  ) {
+    throw new errors.ApplicationError('Supplier invoice service is missing refreshPaymentTotals().');
+  }
+  return svc.refreshPaymentTotals(invoiceDocumentId);
 }
 
 async function recordHistory(strapi: any, supplierOrderDocumentId: string, message: string) {
@@ -175,8 +204,11 @@ async function recordHistory(strapi: any, supplierOrderDocumentId: string, messa
   });
 }
 
-export default factories.createCoreService(PAYMENT_UID, ({ strapi }) => ({
-  async createWithInvoiceTotals(data: any) {
+export default factories.createCoreService(SUPPLIER_INVOICE_PAYMENT_UID, ({ strapi }) => ({
+  async createWithInvoiceTotals(data: unknown) {
+    if (!isRecord(data)) {
+      throw new errors.ValidationError('Invalid payload.');
+    }
     const invoice = await findInvoiceDocument(strapi, data?.invoice);
     if (!invoice) {
       throw new errors.ValidationError('Invoice not found.');
@@ -188,12 +220,22 @@ export default factories.createCoreService(PAYMENT_UID, ({ strapi }) => ({
 
     const paymentAmount = mergePaymentAmountWithInvoice(data, invoice);
 
-    const { invoice: _inv, paymentAmount: _pa, amount, ...rest } = data;
+    const method = data.method;
+    if (!isPaymentMethod(method)) {
+      throw new errors.ValidationError('A valid payment method is required.');
+    }
+    const paymentDate = toIsoString(data.paymentDate);
+    if (!paymentDate) {
+      throw new errors.ValidationError('A valid paymentDate is required.');
+    }
+    const notes = typeof data.notes === 'string' ? data.notes : undefined;
 
-    const payment = await (strapi as any).documents(PAYMENT_UID).create({
+    const payment = await strapi.documents(SUPPLIER_INVOICE_PAYMENT_UID).create({
       data: {
-        ...rest,
-        invoice: connectDocument(normalized.documentId),
+        method,
+        paymentDate,
+        ...(notes ? { notes } : {}),
+        invoice: { documentId: normalized.documentId },
         paymentAmount,
       },
       populate: {
@@ -209,14 +251,17 @@ export default factories.createCoreService(PAYMENT_UID, ({ strapi }) => ({
       strapi,
       normalized.supplierOrder.documentId,
       `Payment of ${formatAmount(
-        roundMoney(payment?.paymentAmount?.amount ?? 0),
+        roundMoney(paymentAmount.amount ?? 0),
       )} recorded for ${normalized.invoiceNumber}`,
     );
 
     return payment;
   },
 
-  async updateWithInvoiceTotals(documentId: string, data: any) {
+  async updateWithInvoiceTotals(documentId: string, data: unknown) {
+    if (!isRecord(data)) {
+      throw new errors.ValidationError('Invalid payload.');
+    }
     const existing = await findPayment(strapi, documentId);
     const inv = existing?.invoice;
     const normalized = await normalizeInvoiceForHistory(strapi, {
@@ -227,17 +272,17 @@ export default factories.createCoreService(PAYMENT_UID, ({ strapi }) => ({
       throw new errors.NotFoundError('Supplier invoice payment not found.');
     }
 
-    const nextData = { ...data };
+    const nextData: Record<string, unknown> = { ...data };
     delete nextData.invoice;
     if (
       Object.prototype.hasOwnProperty.call(data, 'paymentAmount') ||
       Object.prototype.hasOwnProperty.call(data, 'amount')
     ) {
-      (nextData as any).paymentAmount = mergePaymentAmountWithInvoice(data, inv);
+      nextData.paymentAmount = mergePaymentAmountWithInvoice(data, inv);
     }
-    delete (nextData as any).amount;
+    delete nextData.amount;
 
-    const payment = await (strapi as any).documents(PAYMENT_UID).update({
+    const payment = await strapi.documents(SUPPLIER_INVOICE_PAYMENT_UID).update({
       documentId,
       data: nextData,
       populate: {
@@ -269,7 +314,7 @@ export default factories.createCoreService(PAYMENT_UID, ({ strapi }) => ({
       throw new errors.NotFoundError('Supplier invoice payment not found.');
     }
 
-    const deleted = await (strapi as any).documents(PAYMENT_UID).delete({ documentId });
+    const deleted = await strapi.documents(SUPPLIER_INVOICE_PAYMENT_UID).delete({ documentId });
 
     await refreshInvoiceTotals(strapi, normalized.documentId);
     await recordHistory(

@@ -2,17 +2,22 @@
  * supplier-order-history-entry service
  */
 
+import type { Core } from '@strapi/strapi';
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
+import { SUPPLIER_ORDER_UID } from '../../supplier-order/constants';
+import { SUPPLIER_ORDER_HISTORY_ENTRY_UID } from '../constants';
 
-const HISTORY_UID = 'api::supplier-order-history-entry.supplier-order-history-entry';
-const SUPPLIER_ORDER_UID = 'api::supplier-order.supplier-order';
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
-async function findSupplierOrder(strapi: any, documentId: string) {
-  return strapi.documents(SUPPLIER_ORDER_UID).findOne({ documentId });
+async function findSupplierOrder(strapi: Core.Strapi, documentId: string) {
+  return strapi.documents(SUPPLIER_ORDER_UID).findOne({
+    documentId,
+    fields: ['documentId'],
+  });
 }
 
-export default factories.createCoreService(HISTORY_UID, ({ strapi }) => ({
+export default factories.createCoreService(SUPPLIER_ORDER_HISTORY_ENTRY_UID, ({ strapi }) => ({
   async record({
     supplierOrderDocumentId,
     message,
@@ -22,7 +27,7 @@ export default factories.createCoreService(HISTORY_UID, ({ strapi }) => ({
     supplierOrderDocumentId: string;
     message: string;
     at?: string;
-    meta?: Record<string, unknown>;
+    meta?: JsonValue;
   }) {
     if (!supplierOrderDocumentId) {
       throw new errors.ValidationError('Supplier order is required for history entries.');
@@ -33,9 +38,9 @@ export default factories.createCoreService(HISTORY_UID, ({ strapi }) => ({
       throw new errors.ValidationError('Supplier order not found.');
     }
 
-    return (strapi as any).documents(HISTORY_UID).create({
+    return strapi.documents(SUPPLIER_ORDER_HISTORY_ENTRY_UID).create({
       data: {
-        supplierOrder: { connect: [supplierOrder.documentId] },
+        supplierOrder: { documentId: String(supplierOrder.documentId) },
         message,
         at,
         meta,

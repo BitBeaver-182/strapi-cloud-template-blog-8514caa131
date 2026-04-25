@@ -44,13 +44,11 @@
     "invoiceStatus": {
       "type": "enumeration",
       "required": false,
-      "default": "draft",
+      "default": "pending",
       "enum": [
-        "draft",
-        "sent",
+        "pending",
         "paid",
-        "overdue",
-        "cancelled"
+        "overdue"
       ]
     },
     "expirationDate": {

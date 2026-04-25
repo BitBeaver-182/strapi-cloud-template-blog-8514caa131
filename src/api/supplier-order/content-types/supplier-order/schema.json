@@ -15,9 +15,9 @@
     "orderStatus": {
       "type": "enumeration",
       "required": true,
-      "default": "pending",
+      "default": "draft",
       "enum": [
-        "pending",
+        "draft",
         "processing",
         "shipped",
         "delivered",

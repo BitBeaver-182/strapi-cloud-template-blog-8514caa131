@@ -5,14 +5,19 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { ensureRowDocumentId } from '../../../utils/ensure-document-id';
+import { SUPPLIER_ORDER_UID } from '../constants';
+import { SUPPLIER_INVOICE_UID } from '../../supplier-invoice/constants';
 
-const SUPPLIER_ORDER_UID = 'api::supplier-order.supplier-order';
 const QUOTE_UID = 'api::quote.quote';
 const SUPPLIER_UID = 'api::supplier.supplier';
-const INVOICE_SERVICE_UID = 'api::supplier-invoice.supplier-invoice';
+const DELETABLE_ORDER_STATUSES = new Set(['draft', 'pending']);
 
 type RelationRef = number | string | null;
 type Money = { amount: number; currency_code: string };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 function extractRelationRef(value: any): RelationRef {
   if (value == null) return null;
@@ -33,6 +38,13 @@ function extractRelationRef(value: any): RelationRef {
 
 function connectDocument(documentId: string) {
   return { connect: [documentId] };
+}
+
+function normalizeOrderStatus(value: unknown) {
+  if (value === 'pending') {
+    return 'draft';
+  }
+  return value;
 }
 
 function roundMoney(value: unknown) {
@@ -71,10 +83,9 @@ function extractUploadFileId(value: unknown): number | null {
   if (typeof value === 'string' && /^\d+$/.test(value)) {
     return Number(value);
   }
-  if (typeof value === 'object' && !Array.isArray(value)) {
-    const media = value as Record<string, unknown>;
-    if (media['id'] != null) {
-      return extractUploadFileId(media['id']);
+  if (isRecord(value) && !Array.isArray(value)) {
+    if (value.id != null) {
+      return extractUploadFileId(value.id);
     }
   }
   return null;
@@ -162,7 +173,16 @@ async function createInvoiceFromQuoteIfComplete(strapi: any, order: any, quote: 
     return;
   }
 
-  await (strapi.service(INVOICE_SERVICE_UID) as any).createWithTotals({
+  const invoiceService = strapi.service(SUPPLIER_INVOICE_UID);
+  if (
+    typeof invoiceService !== 'object' ||
+    invoiceService === null ||
+    typeof Reflect.get(invoiceService, 'createWithTotals') !== 'function'
+  ) {
+    throw new errors.ApplicationError('Invoice service is missing createWithTotals().');
+  }
+
+  await invoiceService.createWithTotals({
     supplierOrder: connectDocument(order.documentId),
     vendorName,
     total,
@@ -177,6 +197,7 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
   async createWithInferredSupplier(data: any) {
     const quote = await findQuoteWithSupplier(strapi, data?.quote);
     assertValidTrackingUrl(data?.trackingUrl);
+    const normalizedData = { ...data, orderStatus: normalizeOrderStatus(data?.orderStatus) };
 
     const quoteDocumentId = await ensureRowDocumentId(strapi, QUOTE_UID, quote);
     if (!quoteDocumentId) {
@@ -184,9 +205,9 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
     }
     const supplierConnect = await resolveSupplierConnectRef(strapi, quote);
 
-    const order = await (strapi as any).documents(SUPPLIER_ORDER_UID).create({
+    const order = await strapi.documents(SUPPLIER_ORDER_UID).create({
       data: {
-        ...data,
+        ...normalizedData,
         quote: connectDocument(quoteDocumentId),
         supplier: connectDocument(supplierConnect),
       },
@@ -195,9 +216,16 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
 
     await createInvoiceFromQuoteIfComplete(strapi, order, quote);
 
-    await (strapi.service(
-      'api::supplier-order-history-entry.supplier-order-history-entry',
-    ) as any).record({
+    const historyService = strapi.service('api::supplier-order-history-entry.supplier-order-history-entry');
+    if (
+      typeof historyService !== 'object' ||
+      historyService === null ||
+      typeof Reflect.get(historyService, 'record') !== 'function'
+    ) {
+      throw new errors.ApplicationError('History service is missing record().');
+    }
+
+    await historyService.record({
       supplierOrderDocumentId: order.documentId,
       message: 'Order created',
       at: order.createdAt,
@@ -211,7 +239,7 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
       assertValidTrackingUrl(data.trackingUrl);
     }
 
-    const existing = await (strapi as any).documents(SUPPLIER_ORDER_UID).findOne({
+    const existing = await strapi.documents(SUPPLIER_ORDER_UID).findOne({
       documentId,
       populate: ['quote', 'supplier'],
     });
@@ -221,6 +249,9 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
     }
 
     const nextData = { ...data };
+    if (Object.prototype.hasOwnProperty.call(nextData, 'orderStatus')) {
+      nextData.orderStatus = normalizeOrderStatus(nextData.orderStatus);
+    }
     delete nextData.supplier;
 
     if (Object.prototype.hasOwnProperty.call(nextData, 'quote')) {
@@ -234,23 +265,30 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
       nextData.supplier = connectDocument(supplierConnect);
     }
 
-    const updated = await (strapi as any).documents(SUPPLIER_ORDER_UID).update({
+    const updated = await strapi.documents(SUPPLIER_ORDER_UID).update({
       documentId,
       data: nextData,
       populate: ['quote', 'supplier'],
     });
 
-    const history = strapi.service(
-      'api::supplier-order-history-entry.supplier-order-history-entry',
-    ) as any;
+    const history = strapi.service('api::supplier-order-history-entry.supplier-order-history-entry');
+    if (
+      typeof history !== 'object' ||
+      history === null ||
+      typeof Reflect.get(history, 'record') !== 'function'
+    ) {
+      throw new errors.ApplicationError('History service is missing record().');
+    }
 
     if (
       Object.prototype.hasOwnProperty.call(data, 'orderStatus') &&
-      data.orderStatus !== existing.orderStatus
+      normalizeOrderStatus(data.orderStatus) !== existing.orderStatus
     ) {
       await history.record({
         supplierOrderDocumentId: updated.documentId,
-        message: `Status changed from ${existing.orderStatus} to ${data.orderStatus}`,
+        message: `Status changed from ${existing.orderStatus} to ${normalizeOrderStatus(
+          data.orderStatus,
+        )}`,
       });
     }
 
@@ -266,4 +304,22 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
 
     return updated;
   },
+
+  async deleteWithGuards(documentId: string) {
+    const existing = await strapi.documents(SUPPLIER_ORDER_UID).findOne({
+      documentId,
+      fields: ['orderStatus'],
+    });
+
+    if (!existing) {
+      throw new errors.NotFoundError('Supplier order not found.');
+    }
+
+    if (!DELETABLE_ORDER_STATUSES.has(String(existing.orderStatus ?? ''))) {
+      throw new errors.ValidationError('Only draft supplier orders can be deleted.');
+    }
+
+    return strapi.documents(SUPPLIER_ORDER_UID).delete({ documentId });
+  },
+
 }));

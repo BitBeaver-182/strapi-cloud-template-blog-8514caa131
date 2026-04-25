@@ -1,7 +1,4 @@
-/**
- * supplier-order router
- */
-
 import { factories } from '@strapi/strapi';
+import { SUPPLIER_ORDER_UID } from '../constants';
 
-export default factories.createCoreRouter('api::supplier-order.supplier-order');
+export default factories.createCoreRouter(SUPPLIER_ORDER_UID);

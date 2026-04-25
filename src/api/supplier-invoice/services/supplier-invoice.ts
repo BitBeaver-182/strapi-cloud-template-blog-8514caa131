@@ -4,13 +4,21 @@
 
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
+import type { Core } from '@strapi/strapi';
 import { ensureRowDocumentId } from '../../../utils/ensure-document-id';
+import { SUPPLIER_INVOICE_UID } from '../constants';
+import { SUPPLIER_ORDER_UID } from '../../supplier-order/constants';
+import { SUPPLIER_ORDER_HISTORY_ENTRY_UID } from '../../supplier-order-history-entry/constants';
+import { SupplierOrderHistoryEntryService } from '../../supplier-order-history-entry/types';
 
-const INVOICE_UID = 'api::supplier-invoice.supplier-invoice';
-const SUPPLIER_ORDER_UID = 'api::supplier-order.supplier-order';
 const SUPPLIER_UID = 'api::supplier.supplier';
 
 type Money = { amount: number; currency_code: string };
+type ComputedInvoiceStatus = 'pending' | 'paid' | 'overdue';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 function roundMoney(value: unknown) {
   const n = Number(value);
@@ -20,8 +28,8 @@ function roundMoney(value: unknown) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-function normalizeMoney(m: any): Money | null {
-  if (m == null) {
+function normalizeMoney(m: unknown): Money | null {
+  if (!isRecord(m)) {
     return null;
   }
   const code = m.currency_code;
@@ -48,14 +56,14 @@ function calculateRemainingMoney(total: Money, paid: Money): Money {
   };
 }
 
-function extractRelationRef(value: any): string | number | null {
+function extractRelationRef(value: unknown): string | number | null {
   if (value == null) {
     return null;
   }
   if (typeof value === 'number' || typeof value === 'string') {
     return value;
   }
-  if (typeof value !== 'object') {
+  if (!isRecord(value)) {
     return null;
   }
   if (value.documentId != null) {
@@ -75,11 +83,46 @@ function extractRelationRef(value: any): string | number | null {
   return null;
 }
 
-function connectDocument(documentId: string) {
-  return { connect: [documentId] };
+function isExpiredDate(value: unknown) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return false;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+  return parsed.getTime() <= Date.now();
 }
 
-async function findSupplierOrder(strapi: any, supplierOrderValue: any) {
+function computeInvoiceStatus(input: {
+  amountRemaining: Money | null;
+  expirationDate: unknown;
+}): ComputedInvoiceStatus {
+  const remaining = input.amountRemaining ? roundMoney(input.amountRemaining.amount) : 0;
+  if (remaining <= 0) {
+    return 'paid';
+  }
+  if (isExpiredDate(input.expirationDate)) {
+    return 'overdue';
+  }
+  return 'pending';
+}
+
+function enrichInvoice(invoice: Record<string, unknown>) {
+  const amountRemaining = normalizeMoney(invoice.amountRemaining);
+  const status = computeInvoiceStatus({
+    amountRemaining,
+    expirationDate: invoice.expirationDate,
+  });
+
+  return {
+    ...invoice,
+    invoiceStatus: status,
+    is_expired: isExpiredDate(invoice.expirationDate),
+  };
+}
+
+async function findSupplierOrder(strapi: Core.Strapi, supplierOrderValue: unknown) {
   const ref = extractRelationRef(supplierOrderValue);
   if (ref == null || ref === '') {
     throw new errors.ValidationError('A supplier order is required.');
@@ -98,7 +141,10 @@ async function findSupplierOrder(strapi: any, supplierOrderValue: any) {
   });
 }
 
-async function withSupplierOrderDocumentId(strapi: any, order: any) {
+async function withSupplierOrderDocumentId(
+  strapi: Core.Strapi,
+  order: unknown,
+): Promise<(Record<string, unknown> & { documentId: string }) | null> {
   if (!order) {
     return null;
   }
@@ -106,22 +152,33 @@ async function withSupplierOrderDocumentId(strapi: any, order: any) {
   if (!documentId) {
     return null;
   }
+  if (!isRecord(order)) {
+    return null;
+  }
   return { ...order, documentId };
 }
 
-async function recordHistory(strapi: any, supplierOrderDocumentId: string, message: string) {
-  await strapi.service('api::supplier-order-history-entry.supplier-order-history-entry').record({
+async function recordHistory(strapi: Core.Strapi, supplierOrderDocumentId: string, message: string) {
+  const svc = strapi.service(SUPPLIER_ORDER_HISTORY_ENTRY_UID) as SupplierOrderHistoryEntryService;
+  if (!svc || typeof svc !== 'object' || !('record' in svc) || typeof svc.record !== 'function') {
+    throw new errors.ApplicationError('History service is missing a record() method.');
+  }
+
+  await svc.record({
     supplierOrderDocumentId,
     message,
   });
 }
 
-async function resolveSupplierName(strapi: any, supplierOrder: any): Promise<string | null> {
-  const supplier = supplierOrder?.supplier;
+async function resolveSupplierName(strapi: Core.Strapi, supplierOrder: unknown): Promise<string | null> {
+  if (!isRecord(supplierOrder)) {
+    return null;
+  }
+  const supplier = supplierOrder.supplier;
   if (!supplier) {
     return null;
   }
-  if (typeof supplier?.name === 'string' && supplier.name.trim() !== '') {
+  if (isRecord(supplier) && typeof supplier.name === 'string' && supplier.name.trim() !== '') {
     return supplier.name.trim();
   }
 
@@ -130,7 +187,7 @@ async function resolveSupplierName(strapi: any, supplierOrder: any): Promise<str
     return null;
   }
 
-  const supplierDocument = await (strapi as any).documents(SUPPLIER_UID).findOne({
+  const supplierDocument = await strapi.documents(SUPPLIER_UID).findOne({
     documentId: supplierDocumentId,
   });
   if (!supplierDocument?.name || String(supplierDocument.name).trim() === '') {
@@ -139,21 +196,62 @@ async function resolveSupplierName(strapi: any, supplierOrder: any): Promise<str
   return String(supplierDocument.name).trim();
 }
 
-function invoiceLabel(invoice: any) {
-  if (invoice?.invoiceNumber) {
+function invoiceLabel(invoice: unknown) {
+  if (!isRecord(invoice)) {
+    return 'Invoice';
+  }
+  if (typeof invoice.invoiceNumber === 'string' && invoice.invoiceNumber.trim() !== '') {
     return `Invoice ${invoice.invoiceNumber}`;
   }
   return 'Invoice';
 }
 
-export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
-  async createWithTotals(data: any) {
-    const total = normalizeMoney(data?.total);
+export default factories.createCoreService(SUPPLIER_INVOICE_UID, ({ strapi }) => ({
+  async find(params) {
+    const { results, pagination } = await super.find(params);
+    return {
+      results: results.map((invoice: Record<string, unknown>) => enrichInvoice(invoice)),
+      pagination,
+    };
+  },
+
+  async findOne(documentId, params) {
+    const entity = await super.findOne(documentId, params);
+    if (!entity) {
+      return entity;
+    }
+    if (!isRecord(entity)) {
+      return entity;
+    }
+    return enrichInvoice(entity);
+  },
+
+  async createWithTotals(data: unknown) {
+    if (!isRecord(data)) {
+      throw new errors.ValidationError('Invalid payload.');
+    }
+    const payload = data;
+    const total = normalizeMoney(payload?.total);
     if (!total) {
       throw new errors.ValidationError('A valid total (amount + currency_code) is required.');
     }
 
-    const supplierOrderRow = await findSupplierOrder(strapi, data?.supplierOrder);
+    const rawExpirationDate = payload.expirationDate;
+    const expirationDate =
+      rawExpirationDate instanceof Date
+        ? rawExpirationDate.toISOString()
+        : typeof rawExpirationDate === 'string'
+          ? rawExpirationDate
+          : null;
+    if (expirationDate == null || expirationDate.trim() === '') {
+      throw new errors.ValidationError('expirationDate is required.');
+    }
+    const attachment = payload.attachment;
+    if (attachment == null) {
+      throw new errors.ValidationError('attachment is required.');
+    }
+
+    const supplierOrderRow = await findSupplierOrder(strapi, payload?.supplierOrder);
     const supplierOrder = await withSupplierOrderDocumentId(strapi, supplierOrderRow);
     if (!supplierOrder?.documentId) {
       throw new errors.ValidationError('Supplier order not found.');
@@ -161,8 +259,8 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
 
     const inferredVendorName = await resolveSupplierName(strapi, supplierOrder);
     const vendorName =
-      typeof data?.vendorName === 'string' && data.vendorName.trim() !== ''
-        ? data.vendorName.trim()
+      typeof payload?.vendorName === 'string' && payload.vendorName.trim() !== ''
+        ? payload.vendorName.trim()
         : inferredVendorName;
     if (!vendorName) {
       throw new errors.ValidationError('Vendor name is required.');
@@ -179,17 +277,26 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
       totalAmount,
       invoiceNumber: _invoiceNumber,
       vendorName: _vendorName,
+      invoiceStatus: _invoiceStatus,
       ...rest
-    } = data;
+    } = payload;
 
-    const invoice = await (strapi as any).documents(INVOICE_UID).create({
+    const computedStatus = computeInvoiceStatus({
+      amountRemaining,
+      expirationDate: rest?.expirationDate,
+    });
+
+    const invoice = await strapi.documents(SUPPLIER_INVOICE_UID).create({
       data: {
         ...rest,
-        supplierOrder: connectDocument(supplierOrder.documentId),
+        expirationDate,
+        attachment,
+        supplierOrder: supplierOrder.documentId,
         vendorName,
         total,
         amountPaid,
         amountRemaining,
+        invoiceStatus: computedStatus,
       },
       populate: ['supplierOrder', 'attachment', 'payments'],
     });
@@ -203,10 +310,14 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
     return invoice;
   },
 
-  async updateWithTotals(documentId: string, data: any) {
-    const existing = await (strapi as any).documents(INVOICE_UID).findOne({
+  async updateWithTotals(documentId: string, data: unknown) {
+    if (!isRecord(data)) {
+      throw new errors.ValidationError('Invalid payload.');
+    }
+    const payload = data;
+    const existing = await strapi.documents(SUPPLIER_INVOICE_UID).findOne({
       documentId,
-      populate: ['supplierOrder'],
+      populate: ['supplierOrder', 'total', 'amountPaid', 'amountRemaining'],
     });
 
     if (!existing) {
@@ -230,10 +341,11 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
       amountRemaining,
       totalAmount,
       invoiceNumber: _invoiceNumber,
+      invoiceStatus: _invoiceStatus,
       ...rest
-    } = data;
+    } = payload;
 
-    const nextTotal = Object.prototype.hasOwnProperty.call(data, 'total')
+    const nextTotal = Object.prototype.hasOwnProperty.call(payload, 'total')
       ? normalizeMoney(total)
       : existingTotal;
     if (!nextTotal) {
@@ -253,14 +365,22 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
         ? existingPaid
         : zeroMoney(nextTotal.currency_code);
     const nextRemaining = calculateRemainingMoney(nextTotal, nextPaid);
+    const nextExpirationDate = Object.prototype.hasOwnProperty.call(rest, 'expirationDate')
+      ? rest.expirationDate
+      : existing.expirationDate;
+    const computedStatus = computeInvoiceStatus({
+      amountRemaining: nextRemaining,
+      expirationDate: nextExpirationDate,
+    });
 
-    const updated = await (strapi as any).documents(INVOICE_UID).update({
+    const updated = await strapi.documents(SUPPLIER_INVOICE_UID).update({
       documentId,
       data: {
         ...rest,
         total: nextTotal,
         amountPaid: nextPaid,
         amountRemaining: nextRemaining,
+        invoiceStatus: computedStatus,
       },
       populate: ['supplierOrder', 'attachment', 'payments'],
     });
@@ -283,7 +403,7 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
   },
 
   async deleteWithHistory(documentId: string) {
-    const existing = await (strapi as any).documents(INVOICE_UID).findOne({
+    const existing = await strapi.documents(SUPPLIER_INVOICE_UID).findOne({
       documentId,
       populate: ['supplierOrder'],
     });
@@ -292,7 +412,7 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
       throw new errors.NotFoundError('Supplier invoice not found.');
     }
 
-    const deleted = await (strapi as any).documents(INVOICE_UID).delete({ documentId });
+    const deleted = await strapi.documents(SUPPLIER_INVOICE_UID).delete({ documentId });
 
     const orderForHistory = await withSupplierOrderDocumentId(
       strapi,
@@ -312,9 +432,9 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
   },
 
   async refreshPaymentTotals(documentId: string) {
-    const invoice = await (strapi as any).documents(INVOICE_UID).findOne({
+    const invoice = await strapi.documents(SUPPLIER_INVOICE_UID).findOne({
       documentId,
-      populate: ['payments'],
+      populate: ['total', 'payments'],
     });
 
     if (!invoice) {
@@ -327,8 +447,15 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
     }
 
     const paidSum = roundMoney(
-      (invoice.payments ?? []).reduce((sum: number, payment: any) => {
-        return sum + roundMoney(payment?.paymentAmount?.amount ?? 0);
+      (invoice.payments ?? []).reduce((sum: number, payment: unknown) => {
+        if (!isRecord(payment)) {
+          return sum;
+        }
+        const paymentAmount = payment.paymentAmount;
+        if (!isRecord(paymentAmount)) {
+          return sum;
+        }
+        return sum + roundMoney(paymentAmount.amount ?? 0);
       }, 0),
     );
 
@@ -338,12 +465,17 @@ export default factories.createCoreService(INVOICE_UID, ({ strapi }) => ({
     };
 
     const amountRemaining: Money = calculateRemainingMoney(invTotal, amountPaid);
+    const computedStatus = computeInvoiceStatus({
+      amountRemaining,
+      expirationDate: invoice.expirationDate,
+    });
 
-    return (strapi as any).documents(INVOICE_UID).update({
+    return strapi.documents(SUPPLIER_INVOICE_UID).update({
       documentId,
       data: {
         amountPaid,
         amountRemaining,
+        invoiceStatus: computedStatus,
       },
       populate: ['supplierOrder', 'attachment', 'payments'],
     });
