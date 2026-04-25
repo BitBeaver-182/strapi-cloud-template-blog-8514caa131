@@ -9,6 +9,8 @@
 import loadFactories from './factories';
 import DatabaseSeeder from './seeders/DatabaseSeeder';
 import CurrencySeeder from './seeders/CurrencySeeder';
+import QuoteSeeder from './seeders/QuoteSeeder';
+import SupplierSeeder from './seeders/SupplierSeeder';
 import UserSeeder from './seeders/UserSeeder';
 
 import { compileStrapi, createStrapi, type Core } from '@strapi/strapi';
@@ -18,12 +20,14 @@ import type { Factories } from './factories';
 import type Seeder from './seeders/Seeder';
 
 type SeederCtor = new (strapi: Core.Strapi, factories: Factories) => Seeder;
-type SeederName = 'DatabaseSeeder' | 'UserSeeder' | 'CurrencySeeder';
+type SeederName = 'DatabaseSeeder' | 'UserSeeder' | 'CurrencySeeder' | 'SupplierSeeder' | 'QuoteSeeder';
 
 const SEEDERS: Record<SeederName, SeederCtor> = {
   DatabaseSeeder,
   UserSeeder,
   CurrencySeeder,
+  SupplierSeeder,
+  QuoteSeeder,
 };
 
 async function seed(seederName = 'DatabaseSeeder') {
