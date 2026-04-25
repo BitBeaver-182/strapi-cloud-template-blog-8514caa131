@@ -5,10 +5,11 @@ import {
   mergeSupplierPhoneErrorsIntoValidationError,
 } from './utils/supplier-phone-validation';
 import { SUPPLIER_INVOICE_UID } from './api/supplier-invoice/constants';
-import { SUPPLIER_INVOICE_PAYMENT_UID } from './api/supplier-invoice-payment/types';
+import { SUPPLIER_INVOICE_PAYMENT_UID } from './api/supplier-invoice-payment/constants';
+import { SUPPLIER_ORDER_UID } from './api/supplier-order/constants';
 
 const AUDITED_UIDS = new Set([
-  'api::supplier-order.supplier-order',
+  SUPPLIER_ORDER_UID,
   SUPPLIER_INVOICE_UID,
   SUPPLIER_INVOICE_PAYMENT_UID,
 ]);

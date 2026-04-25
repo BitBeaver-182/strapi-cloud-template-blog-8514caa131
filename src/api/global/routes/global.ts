@@ -1,4 +1,5 @@
 import { factories } from '@strapi/strapi';
+import { GLOBAL_UID } from '../constants';
 
-export default factories.createCoreRouter('api::global.global');
+export default factories.createCoreRouter(GLOBAL_UID);
 

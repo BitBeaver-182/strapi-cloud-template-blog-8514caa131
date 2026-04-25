@@ -1,4 +1,6 @@
 import { errors } from '@strapi/utils';
+import { QUOTE_UID } from '../../../quote/constants';
+import { ORDER_UID } from '../../constants';
 
 function roundMoney(value: unknown) {
   const n = Number(value);
@@ -45,14 +47,14 @@ async function resolveQuoteRowId(strapi: any, quote: any) {
     return null;
   }
   if (typeof quote === 'string') {
-    const byDoc = await strapi.db.query('api::quote.quote').findOne({
+    const byDoc = await strapi.db.query(QUOTE_UID).findOne({
       where: { documentId: quote },
       select: ['id'],
     });
     return byDoc?.id ?? null;
   }
   if (typeof quote === 'number' || (typeof quote === 'string' && /^\\d+$/.test(quote))) {
-    const row = await strapi.db.query('api::quote.quote').findOne({
+    const row = await strapi.db.query(QUOTE_UID).findOne({
       where: { id: Number(quote) },
       select: ['id'],
     });
@@ -60,7 +62,7 @@ async function resolveQuoteRowId(strapi: any, quote: any) {
   }
   if (typeof quote === 'object') {
     if (quote.documentId) {
-      const row = await strapi.db.query('api::quote.quote').findOne({
+      const row = await strapi.db.query(QUOTE_UID).findOne({
         where: { documentId: String(quote.documentId) },
         select: ['id'],
       });
@@ -69,14 +71,14 @@ async function resolveQuoteRowId(strapi: any, quote: any) {
     if (Array.isArray(quote.connect) && quote.connect.length) {
       const x = quote.connect[0];
       if (typeof x === 'string') {
-        const row = await strapi.db.query('api::quote.quote').findOne({
+        const row = await strapi.db.query(QUOTE_UID).findOne({
           where: { documentId: x },
           select: ['id'],
         });
         return row?.id ?? null;
       }
       if (x && x.documentId) {
-        const row = await strapi.db.query('api::quote.quote').findOne({
+        const row = await strapi.db.query(QUOTE_UID).findOne({
           where: { documentId: String(x.documentId) },
           select: ['id'],
         });
@@ -89,14 +91,14 @@ async function resolveQuoteRowId(strapi: any, quote: any) {
     if (Array.isArray(quote.set) && quote.set.length) {
       const x = quote.set[0];
       if (typeof x === 'string') {
-        const row = await strapi.db.query('api::quote.quote').findOne({
+        const row = await strapi.db.query(QUOTE_UID).findOne({
           where: { documentId: x },
           select: ['id'],
         });
         return row?.id ?? null;
       }
       if (x && x.documentId) {
-        const row = await strapi.db.query('api::quote.quote').findOne({
+        const row = await strapi.db.query(QUOTE_UID).findOne({
           where: { documentId: String(x.documentId) },
           select: ['id'],
         });
@@ -116,7 +118,7 @@ async function assertUniqueQuotePerOrder(strapi: any, { data, where }: any) {
     return;
   }
 
-  const existingOrders = await strapi.db.query('api::order.order').findMany({
+  const existingOrders = await strapi.db.query(ORDER_UID).findMany({
     where: { quote: quoteRowId },
     select: ['id', 'documentId'],
     limit: 10,
@@ -125,7 +127,7 @@ async function assertUniqueQuotePerOrder(strapi: any, { data, where }: any) {
   const currentDocumentId = where?.documentId;
   let currentId = null;
   if (currentDocumentId) {
-    const self = await strapi.db.query('api::order.order').findOne({
+    const self = await strapi.db.query(ORDER_UID).findOne({
       where: { documentId: currentDocumentId },
       select: ['id'],
     });

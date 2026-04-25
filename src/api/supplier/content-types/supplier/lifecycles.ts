@@ -1,6 +1,6 @@
 import { errors } from '@strapi/utils';
+import { SUPPLIER_UID } from '../../constants';
 
-const SUPPLIER_UID = 'api::supplier.supplier';
 const SLUG_FIELD = 'slug';
 const NAME_FIELD = 'name';
 

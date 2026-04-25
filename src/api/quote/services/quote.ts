@@ -1,7 +1,6 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
-
-const QUOTE_UID = 'api::quote.quote';
+import { QUOTE_UID } from '../constants';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

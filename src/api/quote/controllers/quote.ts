@@ -1,25 +1,10 @@
 import { factories } from '@strapi/strapi';
+import { QUOTE_UID } from '../constants';
+import { QuoteService } from '../types';
 
-type QuoteService = {
-  deleteWithGuards(documentId: string): Promise<unknown>;
-};
-
-function isQuoteService(value: unknown): value is QuoteService {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  return (
-    'deleteWithGuards' in value &&
-    typeof Reflect.get(value, 'deleteWithGuards') === 'function'
-  );
-}
-
-export default factories.createCoreController('api::quote.quote', ({ strapi }) => ({
+export default factories.createCoreController(QUOTE_UID, ({ strapi }) => ({
   async delete(ctx) {
-    const quoteService = strapi.service('api::quote.quote');
-    if (!isQuoteService(quoteService)) {
-      throw new Error('Quote service is missing deleteWithGuards()');
-    }
+    const quoteService = strapi.service(QUOTE_UID) as QuoteService;
     const entity = await quoteService.deleteWithGuards(ctx.params.documentId);
     const sanitized = await this.sanitizeOutput(entity, ctx);
 
