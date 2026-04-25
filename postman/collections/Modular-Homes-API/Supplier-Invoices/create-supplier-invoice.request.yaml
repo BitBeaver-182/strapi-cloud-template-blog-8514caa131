@@ -1,0 +1,32 @@
+$kind: http-request
+name: Create Supplier Invoice
+method: POST
+url: '{{baseUrl}}/api/supplier-invoices'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "supplierOrder": "supplier-order-document-id",
+        "invoiceNumber": "INV-2024-001",
+        "vendorName": "Acme Supplies",
+        "total": {
+          "amount": 5000,
+          "currency_code": "USD"
+        },
+        "amountPaid": {
+          "amount": 0,
+          "currency_code": "USD"
+        },
+        "amountRemaining": {
+          "amount": 5000,
+          "currency_code": "USD"
+        },
+        "invoiceStatus": "draft",
+        "expirationDate": "2024-03-01T00:00:00.000Z"
+      }
+    }

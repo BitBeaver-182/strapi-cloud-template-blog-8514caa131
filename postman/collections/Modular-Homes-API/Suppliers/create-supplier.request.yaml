@@ -1,0 +1,21 @@
+$kind: http-request
+name: Create Supplier
+method: POST
+url: '{{baseUrl}}/api/suppliers'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "slug": "acme-supplies",
+        "name": "Acme Supplies",
+        "phone_number": "+1-555-000-0000",
+        "email": "contact@acmesupplies.com",
+        "address": "123 Main St, Springfield, USA",
+        "website": "https://acmesupplies.com"
+      }
+    }

@@ -1,0 +1,18 @@
+$kind: http-request
+name: Create Currency
+method: POST
+url: '{{baseUrl}}/api/currencies'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "code": "USD",
+        "decimals": 2,
+        "symbol": "$"
+      }
+    }

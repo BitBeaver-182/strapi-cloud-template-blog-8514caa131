@@ -1,0 +1,5 @@
+$kind: http-request
+name: List Supplier Invoice Payments
+method: GET
+url: '{{baseUrl}}/api/supplier-invoice-payments'
+order: 1000

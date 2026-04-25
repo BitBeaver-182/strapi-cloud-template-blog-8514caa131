@@ -1,0 +1,23 @@
+$kind: http-request
+name: Create Supplier Invoice Payment
+method: POST
+url: '{{baseUrl}}/api/supplier-invoice-payments'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "invoice": "invoice-document-id",
+        "paymentAmount": {
+          "amount": 2500,
+          "currency_code": "USD"
+        },
+        "paymentDate": "2024-01-15T00:00:00.000Z",
+        "method": "wire",
+        "notes": "First payment installment"
+      }
+    }

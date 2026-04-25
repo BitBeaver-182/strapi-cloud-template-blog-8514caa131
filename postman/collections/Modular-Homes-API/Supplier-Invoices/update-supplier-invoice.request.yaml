@@ -1,0 +1,27 @@
+$kind: http-request
+name: Update Supplier Invoice
+method: PUT
+url: '{{baseUrl}}/api/supplier-invoices/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "invoiceStatus": "sent",
+        "amountPaid": {
+          "amount": 2500,
+          "currency_code": "USD"
+        },
+        "amountRemaining": {
+          "amount": 2500,
+          "currency_code": "USD"
+        }
+      }
+    }

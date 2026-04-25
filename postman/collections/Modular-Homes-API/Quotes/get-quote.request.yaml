@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Quote
+method: GET
+url: '{{baseUrl}}/api/quotes/:documentId'
+order: 2000
+pathVariables:
+  - key: documentId
+    value: ''

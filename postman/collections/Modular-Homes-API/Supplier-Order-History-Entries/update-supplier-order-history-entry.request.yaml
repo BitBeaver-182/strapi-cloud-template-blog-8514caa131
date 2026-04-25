@@ -1,0 +1,22 @@
+$kind: http-request
+name: Update Supplier Order History Entry
+method: PUT
+url: '{{baseUrl}}/api/supplier-order-history-entries/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "message": "Updated history entry message",
+        "meta": {
+          "updatedBy": "admin"
+        }
+      }
+    }

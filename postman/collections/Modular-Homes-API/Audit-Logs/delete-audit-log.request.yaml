@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Audit Log
+method: DELETE
+url: '{{baseUrl}}/api/audit-logs/:documentId'
+order: 5000
+pathVariables:
+  - key: documentId
+    value: ''

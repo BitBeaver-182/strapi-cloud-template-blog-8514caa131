@@ -1,0 +1,23 @@
+$kind: http-request
+name: Update Supplier
+method: PUT
+url: '{{baseUrl}}/api/suppliers/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "name": "Acme Supplies Updated",
+        "phone_number": "+1-555-111-1111",
+        "email": "info@acmesupplies.com",
+        "address": "456 Oak Ave, Springfield, USA",
+        "website": "https://acmesupplies.com"
+      }
+    }

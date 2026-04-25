@@ -1,0 +1,40 @@
+$kind: http-request
+name: Create Order
+method: POST
+url: '{{baseUrl}}/api/orders'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "status": "published",
+        "quote": "quote-document-id",
+        "notes": "Order notes here",
+        "order_status": "pending",
+        "lines": [
+          {
+            "quantity": 1,
+            "unit_price": {
+              "amount": 1000,
+              "currency_code": "USD"
+            },
+            "line_total": {
+              "amount": 1000,
+              "currency_code": "USD"
+            }
+          }
+        ],
+        "total": {
+          "amount": 1000,
+          "currency_code": "USD"
+        },
+        "amount_paid": {
+          "amount": 0,
+          "currency_code": "USD"
+        }
+      }
+    }

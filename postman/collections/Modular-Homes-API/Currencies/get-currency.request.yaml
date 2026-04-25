@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Currency
+method: GET
+url: '{{baseUrl}}/api/currencies/:documentId'
+order: 2000
+pathVariables:
+  - key: documentId
+    value: ''

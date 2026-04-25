@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Currency
+method: DELETE
+url: '{{baseUrl}}/api/currencies/:documentId'
+order: 5000
+pathVariables:
+  - key: documentId
+    value: ''

@@ -1,0 +1,24 @@
+$kind: http-request
+name: Update Audit Log
+method: PUT
+url: '{{baseUrl}}/api/audit-logs/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "action": "update",
+        "uid": "api::example.example",
+        "targetDocumentId": "abc123",
+        "payload": {},
+        "date": "2024-01-01T00:00:00.000Z",
+        "meta": {}
+      }
+    }

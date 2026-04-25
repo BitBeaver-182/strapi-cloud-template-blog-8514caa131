@@ -1,0 +1,21 @@
+$kind: http-request
+name: Update Global
+method: PUT
+url: '{{baseUrl}}/api/global'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "siteName": "Modular Homes",
+        "siteDescription": "Your modular home solution",
+        "defaultSeo": {
+          "metaTitle": "Modular Homes",
+          "metaDescription": "Your modular home solution"
+        }
+      }
+    }

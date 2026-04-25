@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Supplier Invoice Payment
+method: GET
+url: '{{baseUrl}}/api/supplier-invoice-payments/:documentId'
+order: 2000
+pathVariables:
+  - key: documentId
+    value: ''

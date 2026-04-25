@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Supplier
+method: DELETE
+url: '{{baseUrl}}/api/suppliers/:documentId'
+order: 5000
+pathVariables:
+  - key: documentId
+    value: ''

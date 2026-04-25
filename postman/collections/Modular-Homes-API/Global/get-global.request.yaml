@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Global
+method: GET
+url: '{{baseUrl}}/api/global'
+order: 1000

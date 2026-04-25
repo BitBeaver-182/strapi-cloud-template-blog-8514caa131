@@ -1,0 +1,21 @@
+$kind: http-request
+name: Update Quote
+method: PUT
+url: '{{baseUrl}}/api/quotes/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "notes": "Updated quote notes",
+        "quote_status": "accepted",
+        "expiration_date": "2024-04-01"
+      }
+    }

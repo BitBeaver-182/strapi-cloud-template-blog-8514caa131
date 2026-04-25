@@ -1,0 +1,24 @@
+$kind: http-request
+name: Create Quote
+method: POST
+url: '{{baseUrl}}/api/quotes'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "supplier": "supplier-document-id",
+        "quotation_date": "2024-01-01",
+        "expiration_date": "2024-03-01",
+        "notes": "Quote notes here",
+        "quote_status": "pending",
+        "total": {
+          "amount": 5000,
+          "currency_code": "USD"
+        }
+      }
+    }

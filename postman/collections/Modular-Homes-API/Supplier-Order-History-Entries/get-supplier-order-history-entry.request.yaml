@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Supplier Order History Entry
+method: GET
+url: '{{baseUrl}}/api/supplier-order-history-entries/:documentId'
+order: 2000
+pathVariables:
+  - key: documentId
+    value: ''

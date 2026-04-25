@@ -1,0 +1,21 @@
+$kind: http-request
+name: Create Audit Log
+method: POST
+url: '{{baseUrl}}/api/audit-logs'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "action": "create",
+        "uid": "api::example.example",
+        "targetDocumentId": "abc123",
+        "payload": {},
+        "date": "2024-01-01T00:00:00.000Z",
+        "meta": {}
+      }
+    }

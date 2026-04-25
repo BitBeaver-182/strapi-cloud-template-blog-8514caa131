@@ -1,0 +1,21 @@
+$kind: http-request
+name: Update Currency
+method: PUT
+url: '{{baseUrl}}/api/currencies/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "code": "USD",
+        "decimals": 2,
+        "symbol": "$"
+      }
+    }

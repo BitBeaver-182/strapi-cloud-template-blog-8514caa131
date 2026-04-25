@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Supplier Order History Entry
+method: DELETE
+url: '{{baseUrl}}/api/supplier-order-history-entries/:documentId'
+order: 5000
+pathVariables:
+  - key: documentId
+    value: ''

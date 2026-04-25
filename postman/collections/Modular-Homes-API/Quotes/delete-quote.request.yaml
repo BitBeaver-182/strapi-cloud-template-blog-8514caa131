@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Quote
+method: DELETE
+url: '{{baseUrl}}/api/quotes/:documentId'
+order: 5000
+pathVariables:
+  - key: documentId
+    value: ''

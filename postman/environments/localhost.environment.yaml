@@ -1,0 +1,8 @@
+name: localhost
+values:
+  - key: baseUrl
+    enabled: true
+    value: ''
+  - key: jwt
+    enabled: true
+    value: ''

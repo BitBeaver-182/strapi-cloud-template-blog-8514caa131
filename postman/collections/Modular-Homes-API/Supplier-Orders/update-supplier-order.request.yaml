@@ -1,0 +1,20 @@
+$kind: http-request
+name: Update Supplier Order
+method: PUT
+url: '{{baseUrl}}/api/supplier-orders/:documentId'
+order: 4000
+pathVariables:
+  - key: documentId
+    value: ''
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "orderStatus": "processing",
+        "trackingUrl": "https://tracking.example.com/order/12345"
+      }
+    }

@@ -1,0 +1,10 @@
+$kind: collection
+name: Modular Homes API
+description: API collection for the Modular Homes Strapi backend
+variables:
+  baseUrl: http://localhost:1337
+  jwt: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{jwt}}"

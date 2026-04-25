@@ -1,0 +1,19 @@
+$kind: http-request
+name: Create Supplier Order
+method: POST
+url: '{{baseUrl}}/api/supplier-orders'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "data": {
+        "orderStatus": "pending",
+        "trackingUrl": "https://tracking.example.com/order/12345",
+        "quote": "quote-document-id",
+        "supplier": "supplier-document-id"
+      }
+    }
