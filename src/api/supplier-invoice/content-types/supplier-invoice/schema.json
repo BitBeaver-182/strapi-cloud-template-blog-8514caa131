@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "supplier_invoices",
+  "info": {
+    "singularName": "supplier-invoice",
+    "pluralName": "supplier-invoices",
+    "displayName": "Supplier Invoice",
+    "description": "Invoice attached to a supplier order."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "supplierOrder": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier-order.supplier-order",
+      "inversedBy": "invoices"
+    },
+    "invoiceNumber": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "vendorName": {
+      "type": "string",
+      "required": true
+    },
+    "totalAmount": {
+      "type": "decimal",
+      "required": true
+    },
+    "amountPaid": {
+      "type": "decimal",
+      "required": true,
+      "default": 0
+    },
+    "amountRemaining": {
+      "type": "decimal",
+      "required": true,
+      "default": 0
+    },
+    "invoiceStatus": {
+      "type": "enumeration",
+      "required": false,
+      "default": "draft",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled"
+      ]
+    },
+    "expirationDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "attachment": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "payments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::supplier-invoice-payment.supplier-invoice-payment",
+      "mappedBy": "invoice"
+    }
+  }
+}

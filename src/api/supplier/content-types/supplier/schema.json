@@ -39,6 +39,12 @@
       "relation": "oneToMany",
       "target": "api::quote.quote",
       "mappedBy": "supplier"
+    },
+    "supplierOrders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::supplier-order.supplier-order",
+      "mappedBy": "supplier"
     }
   }
 }

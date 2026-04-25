@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "supplier_invoice_payments",
+  "info": {
+    "singularName": "supplier-invoice-payment",
+    "pluralName": "supplier-invoice-payments",
+    "displayName": "Supplier Invoice Payment",
+    "description": "Payment recorded against a supplier invoice."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "invoice": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier-invoice.supplier-invoice",
+      "inversedBy": "payments"
+    },
+    "amount": {
+      "type": "decimal",
+      "required": true
+    },
+    "paymentDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "method": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "wire",
+        "card",
+        "cash",
+        "check",
+        "other"
+      ]
+    },
+    "notes": {
+      "type": "text",
+      "required": false
+    }
+  }
+}

@@ -430,6 +430,41 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAuditLogAuditLog extends Struct.CollectionTypeSchema {
+  collectionName: 'audit_logs';
+  info: {
+    description: 'Generic Document Service audit log for selected content types.';
+    displayName: 'Audit Log';
+    pluralName: 'audit-logs';
+    singularName: 'audit-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    action: Schema.Attribute.Enumeration<['create', 'update', 'delete']> &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::audit-log.audit-log'
+    > &
+      Schema.Attribute.Private;
+    meta: Schema.Attribute.JSON;
+    payload: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    targetDocumentId: Schema.Attribute.String;
+    uid: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCurrencyCurrency extends Struct.CollectionTypeSchema {
   collectionName: 'currencies';
   info: {
@@ -551,25 +586,16 @@ export interface ApiQuoteQuote extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    attachments: Schema.Attribute.Media<'files' | 'images', true>;
-    contract_no: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    destination_country: Schema.Attribute.String &
-      Schema.Attribute.CustomField<'plugin::country-select.country'>;
     expiration_date: Schema.Attribute.Date & Schema.Attribute.Required;
-    incoterm: Schema.Attribute.Enumeration<['FOB', 'EXW', 'CIF', 'OTHER']>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'> &
       Schema.Attribute.Private;
     notes: Schema.Attribute.Text;
     orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
-    origin_country: Schema.Attribute.String &
-      Schema.Attribute.CustomField<'plugin::country-select.country'>;
     pdf: Schema.Attribute.Media<'files'>;
-    pi_no: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     quotation_date: Schema.Attribute.Date & Schema.Attribute.Required;
     quote_status: Schema.Attribute.Enumeration<
@@ -577,8 +603,188 @@ export interface ApiQuoteQuote extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.DefaultTo<'pending'>;
     supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'>;
+    supplierOrders: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-order.supplier-order'
+    >;
     total: Schema.Attribute.Component<'shared.money', false>;
-    total_display: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSupplierInvoicePaymentSupplierInvoicePayment
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'supplier_invoice_payments';
+  info: {
+    description: 'Payment recorded against a supplier invoice.';
+    displayName: 'Supplier Invoice Payment';
+    pluralName: 'supplier-invoice-payments';
+    singularName: 'supplier-invoice-payment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    invoice: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::supplier-invoice.supplier-invoice'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-invoice-payment.supplier-invoice-payment'
+    > &
+      Schema.Attribute.Private;
+    method: Schema.Attribute.Enumeration<
+      ['wire', 'card', 'cash', 'check', 'other']
+    > &
+      Schema.Attribute.Required;
+    notes: Schema.Attribute.Text;
+    paymentDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSupplierInvoiceSupplierInvoice
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'supplier_invoices';
+  info: {
+    description: 'Invoice attached to a supplier order.';
+    displayName: 'Supplier Invoice';
+    pluralName: 'supplier-invoices';
+    singularName: 'supplier-invoice';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    amountPaid: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    amountRemaining: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    attachment: Schema.Attribute.Media<'files'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    expirationDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    invoiceNumber: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    invoiceStatus: Schema.Attribute.Enumeration<
+      ['draft', 'sent', 'paid', 'overdue', 'cancelled']
+    > &
+      Schema.Attribute.DefaultTo<'draft'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-invoice.supplier-invoice'
+    > &
+      Schema.Attribute.Private;
+    payments: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-invoice-payment.supplier-invoice-payment'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    supplierOrder: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::supplier-order.supplier-order'
+    >;
+    totalAmount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    vendorName: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiSupplierOrderHistoryEntrySupplierOrderHistoryEntry
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'supplier_order_history_entries';
+  info: {
+    description: 'UI-ready timeline entry for supplier order history.';
+    displayName: 'Supplier Order History Entry';
+    pluralName: 'supplier-order-history-entries';
+    singularName: 'supplier-order-history-entry';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    at: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-order-history-entry.supplier-order-history-entry'
+    > &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text & Schema.Attribute.Required;
+    meta: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    supplierOrder: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::supplier-order.supplier-order'
+    >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSupplierOrderSupplierOrder
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'supplier_orders';
+  info: {
+    description: 'Supplier-side order created from a quote. Supplier is inferred from the quote.';
+    displayName: 'Supplier Order';
+    pluralName: 'supplier-orders';
+    singularName: 'supplier-order';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    historyEntries: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-order-history-entry.supplier-order-history-entry'
+    >;
+    invoices: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-invoice.supplier-invoice'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-order.supplier-order'
+    > &
+      Schema.Attribute.Private;
+    orderStatus: Schema.Attribute.Enumeration<
+      ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    publishedAt: Schema.Attribute.DateTime;
+    quote: Schema.Attribute.Relation<'manyToOne', 'api::quote.quote'> &
+      Schema.Attribute.Required;
+    supplier: Schema.Attribute.Relation<'manyToOne', 'api::supplier.supplier'> &
+      Schema.Attribute.Required;
+    trackingUrl: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -618,6 +824,10 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     quotes: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'>;
     slug: Schema.Attribute.UID<'name'>;
+    supplierOrders: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::supplier-order.supplier-order'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1136,10 +1346,15 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::audit-log.audit-log': ApiAuditLogAuditLog;
       'api::currency.currency': ApiCurrencyCurrency;
       'api::global.global': ApiGlobalGlobal;
       'api::order.order': ApiOrderOrder;
       'api::quote.quote': ApiQuoteQuote;
+      'api::supplier-invoice-payment.supplier-invoice-payment': ApiSupplierInvoicePaymentSupplierInvoicePayment;
+      'api::supplier-invoice.supplier-invoice': ApiSupplierInvoiceSupplierInvoice;
+      'api::supplier-order-history-entry.supplier-order-history-entry': ApiSupplierOrderHistoryEntrySupplierOrderHistoryEntry;
+      'api::supplier-order.supplier-order': ApiSupplierOrderSupplierOrder;
       'api::supplier.supplier': ApiSupplierSupplier;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

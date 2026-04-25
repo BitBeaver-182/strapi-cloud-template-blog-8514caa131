@@ -50,6 +50,7 @@ function strapiMessageToKey(
 }
 
 const MESSAGE_MAP: Array<[RegExp, string]> = [
+  [/cannot be empty/i, "validation.required"],
   [/must be defined/i, "validation.required"],
   [/is a required field/i, "validation.required"],
   [/must be a string/i, "validation.string"],
@@ -58,6 +59,7 @@ const MESSAGE_MAP: Array<[RegExp, string]> = [
   [/must be at most (\d+) char/i, "validation.maxLength"],
   [/must be a valid url/i, "validation.url"],
   [/must be a valid phone/i, "validation.phone"],
+  [/Quote PDF must be a PDF file/i, "validation.quotePdfInvalid"],
 ]
 
 

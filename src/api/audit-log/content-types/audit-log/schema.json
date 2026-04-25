@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "audit_logs",
+  "info": {
+    "singularName": "audit-log",
+    "pluralName": "audit-logs",
+    "displayName": "Audit Log",
+    "description": "Generic Document Service audit log for selected content types."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "action": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "create",
+        "update",
+        "delete"
+      ]
+    },
+    "uid": {
+      "type": "string",
+      "required": true
+    },
+    "targetDocumentId": {
+      "type": "string",
+      "required": false
+    },
+    "payload": {
+      "type": "json"
+    },
+    "date": {
+      "type": "datetime",
+      "required": true
+    },
+    "meta": {
+      "type": "json"
+    }
+  }
+}

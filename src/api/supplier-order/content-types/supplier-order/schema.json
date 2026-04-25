@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "supplier_orders",
+  "info": {
+    "singularName": "supplier-order",
+    "pluralName": "supplier-orders",
+    "displayName": "Supplier Order",
+    "description": "Supplier-side order created from a quote. Supplier is inferred from the quote."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "orderStatus": {
+      "type": "enumeration",
+      "required": true,
+      "default": "pending",
+      "enum": [
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ]
+    },
+    "trackingUrl": {
+      "type": "string",
+      "required": false
+    },
+    "quote": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::quote.quote",
+      "inversedBy": "supplierOrders",
+      "required": true
+    },
+    "supplier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "supplierOrders",
+      "required": true
+    },
+    "invoices": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::supplier-invoice.supplier-invoice",
+      "mappedBy": "supplierOrder"
+    },
+    "historyEntries": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::supplier-order-history-entry.supplier-order-history-entry",
+      "mappedBy": "supplierOrder"
+    }
+  }
+}

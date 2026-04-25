@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "supplier_order_history_entries",
+  "info": {
+    "singularName": "supplier-order-history-entry",
+    "pluralName": "supplier-order-history-entries",
+    "displayName": "Supplier Order History Entry",
+    "description": "UI-ready timeline entry for supplier order history."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "supplierOrder": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier-order.supplier-order",
+      "inversedBy": "historyEntries"
+    },
+    "message": {
+      "type": "text",
+      "required": true
+    },
+    "at": {
+      "type": "datetime",
+      "required": true
+    },
+    "meta": {
+      "type": "json"
+    }
+  }
+}
