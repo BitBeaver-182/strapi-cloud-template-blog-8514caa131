@@ -18,8 +18,10 @@
       "target": "api::supplier-invoice.supplier-invoice",
       "inversedBy": "payments"
     },
-    "amount": {
-      "type": "decimal",
+    "paymentAmount": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false,
       "required": true
     },
     "paymentDate": {

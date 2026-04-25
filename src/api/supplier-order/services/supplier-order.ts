@@ -9,8 +9,10 @@ import { ensureRowDocumentId } from '../../../utils/ensure-document-id';
 const SUPPLIER_ORDER_UID = 'api::supplier-order.supplier-order';
 const QUOTE_UID = 'api::quote.quote';
 const SUPPLIER_UID = 'api::supplier.supplier';
+const INVOICE_SERVICE_UID = 'api::supplier-invoice.supplier-invoice';
 
 type RelationRef = number | string | null;
+type Money = { amount: number; currency_code: string };
 
 function extractRelationRef(value: any): RelationRef {
   if (value == null) return null;
@@ -33,6 +35,66 @@ function connectDocument(documentId: string) {
   return { connect: [documentId] };
 }
 
+function roundMoney(value: unknown) {
+  const n = Number(value);
+  if (Number.isNaN(n)) {
+    return 0;
+  }
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function normalizeMoney(m: any): Money | null {
+  if (m == null) {
+    return null;
+  }
+  const code = m.currency_code;
+  if (code == null || String(code).trim() === '' || String(code).length < 3) {
+    return null;
+  }
+  return {
+    amount: roundMoney(m.amount),
+    currency_code: String(code).toUpperCase().slice(0, 3),
+  };
+}
+
+function zeroMoney(currencyCode: string): Money {
+  return { amount: 0, currency_code: currencyCode };
+}
+
+function extractUploadFileId(value: unknown): number | null {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const media = value as Record<string, unknown>;
+    if (media['id'] != null) {
+      return extractUploadFileId(media['id']);
+    }
+  }
+  return null;
+}
+
+function toIsoDateStart(value: unknown): string | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+  const dateOnly = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return `${dateOnly}T00:00:00.000Z`;
+  }
+  const parsed = new Date(dateOnly);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed.toISOString();
+}
+
 async function findQuoteWithSupplier(strapi: any, quoteValue: any) {
   const ref = extractRelationRef(quoteValue);
   if (ref == null || ref === '') {
@@ -42,13 +104,13 @@ async function findQuoteWithSupplier(strapi: any, quoteValue: any) {
   if (typeof ref === 'number' || (typeof ref === 'string' && /^\d+$/.test(String(ref)))) {
     return strapi.db.query(QUOTE_UID).findOne({
       where: { id: Number(ref) },
-      populate: ['supplier'],
+      populate: ['supplier', 'pdf', 'total'],
     });
   }
 
   return strapi.documents(QUOTE_UID).findOne({
     documentId: String(ref),
-    populate: ['supplier'],
+    populate: ['supplier', 'pdf', 'total'],
   });
 }
 
@@ -87,6 +149,30 @@ async function resolveSupplierConnectRef(strapi: any, quote: any) {
   return id;
 }
 
+async function createInvoiceFromQuoteIfComplete(strapi: any, order: any, quote: any) {
+  const attachment = extractUploadFileId(quote?.pdf);
+  const total = normalizeMoney(quote?.total);
+  const expirationDate = toIsoDateStart(quote?.expiration_date);
+  const vendorName =
+    typeof quote?.supplier?.name === 'string' && quote.supplier.name.trim() !== ''
+      ? quote.supplier.name.trim()
+      : null;
+
+  if (!attachment || !total || !expirationDate || !vendorName) {
+    return;
+  }
+
+  await (strapi.service(INVOICE_SERVICE_UID) as any).createWithTotals({
+    supplierOrder: connectDocument(order.documentId),
+    vendorName,
+    total,
+    amountPaid: zeroMoney(total.currency_code),
+    amountRemaining: { ...total },
+    expirationDate,
+    attachment,
+  });
+}
+
 export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => ({
   async createWithInferredSupplier(data: any) {
     const quote = await findQuoteWithSupplier(strapi, data?.quote);
@@ -106,6 +192,8 @@ export default factories.createCoreService(SUPPLIER_ORDER_UID, ({ strapi }) => (
       },
       populate: ['quote', 'supplier'],
     });
+
+    await createInvoiceFromQuoteIfComplete(strapi, order, quote);
 
     await (strapi.service(
       'api::supplier-order-history-entry.supplier-order-history-entry',

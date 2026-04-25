@@ -20,26 +20,26 @@
     },
     "invoiceNumber": {
       "type": "string",
-      "required": true,
       "unique": true
     },
     "vendorName": {
       "type": "string",
       "required": true
     },
-    "totalAmount": {
-      "type": "decimal",
-      "required": true
+    "total": {
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
     },
     "amountPaid": {
-      "type": "decimal",
-      "required": true,
-      "default": 0
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
     },
     "amountRemaining": {
-      "type": "decimal",
-      "required": true,
-      "default": 0
+      "type": "component",
+      "component": "shared.money",
+      "repeatable": false
     },
     "invoiceStatus": {
       "type": "enumeration",
@@ -60,7 +60,7 @@
     "attachment": {
       "type": "media",
       "multiple": false,
-      "required": false,
+      "required": true,
       "allowedTypes": [
         "files"
       ]

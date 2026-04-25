@@ -627,7 +627,6 @@ export interface ApiSupplierInvoicePaymentSupplierInvoicePayment
     draftAndPublish: false;
   };
   attributes: {
-    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -646,6 +645,8 @@ export interface ApiSupplierInvoicePaymentSupplierInvoicePayment
     > &
       Schema.Attribute.Required;
     notes: Schema.Attribute.Text;
+    paymentAmount: Schema.Attribute.Component<'shared.money', false> &
+      Schema.Attribute.Required;
     paymentDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
@@ -667,20 +668,14 @@ export interface ApiSupplierInvoiceSupplierInvoice
     draftAndPublish: false;
   };
   attributes: {
-    amountPaid: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<0>;
-    amountRemaining: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<0>;
-    attachment: Schema.Attribute.Media<'files'>;
+    amountPaid: Schema.Attribute.Component<'shared.money', false>;
+    amountRemaining: Schema.Attribute.Component<'shared.money', false>;
+    attachment: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     expirationDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    invoiceNumber: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+    invoiceNumber: Schema.Attribute.String & Schema.Attribute.Unique;
     invoiceStatus: Schema.Attribute.Enumeration<
       ['draft', 'sent', 'paid', 'overdue', 'cancelled']
     > &
@@ -700,7 +695,7 @@ export interface ApiSupplierInvoiceSupplierInvoice
       'manyToOne',
       'api::supplier-order.supplier-order'
     >;
-    totalAmount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    total: Schema.Attribute.Component<'shared.money', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
