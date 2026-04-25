@@ -1,13 +1,13 @@
-const Factory = require('./Factory');
+import Factory from './Factory';
 
-class UserFactory extends Factory {
+export default class UserFactory extends Factory<'plugin::users-permissions.user'> {
   get model() {
-    return 'plugin::users-permissions.user';
+    return 'plugin::users-permissions.user' as const;
   }
 
   definition() {
     return {
-      username: this.faker.internet.userName(),
+      username: this.faker.internet.username(),
       email: this.faker.internet.email(),
       password: 'Password123!',
       confirmed: true,
@@ -45,4 +45,3 @@ class UserFactory extends Factory {
   }
 }
 
-module.exports = UserFactory;

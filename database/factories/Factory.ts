@@ -1,29 +1,28 @@
 import { faker } from '@faker-js/faker';
 import type { Core } from '@strapi/strapi';
+import type { Modules, UID } from '@strapi/types';
 
-export default class Factory {
+export default abstract class Factory<TUID extends UID.ContentType> {
+  protected faker: typeof faker;
+  protected strapi: Core.Strapi;
+
   constructor(strapi: Core.Strapi) {
     this.strapi = strapi;
     this.faker = faker;
   }
 
-  private faker: typeof faker;
-  private strapi: Core.Strapi;
-
   /**
    * Define the model's default state
    * @returns {Object}
    */
-  definition() {
-    throw new Error('Definition method must be implemented in factory');
-  }
+  abstract definition(): Modules.EntityService.Params.Data.Input<TUID>;
 
   /**
    * Create a single entry
    * @param {Object} attributes - Override attributes
    * @returns {Promise<Object>}
    */
-  async create(attributes = {}) {
+  async create(attributes: Partial<Modules.EntityService.Params.Data.Input<TUID>> = {}) {
     const data = { ...this.definition(), ...attributes };
     return await this.strapi.entityService.create(this.model, { data });
   }
@@ -34,8 +33,8 @@ export default class Factory {
    * @param {Object} attributes - Override attributes
    * @returns {Promise<Array>}
    */
-  async createMany(count, attributes = {}) {
-    const promises = [];
+  async createMany(count: number, attributes: Partial<Modules.EntityService.Params.Data.Input<TUID>> = {}) {
+    const promises: Array<ReturnType<typeof this.create>> = [];
     for (let i = 0; i < count; i++) {
       promises.push(this.create(attributes));
     }
@@ -47,12 +46,13 @@ export default class Factory {
    * @param {string} state - State name
    * @returns {Factory}
    */
-  state(stateName: string): Factory {
-    if (typeof this[stateName] !== 'function') {
+  state(stateName: string): this {
+    const stateFn = (this as unknown as Record<string, unknown>)[stateName];
+    if (typeof stateFn !== 'function') {
       throw new Error(`State "${stateName}" does not exist`);
     }
 
-    const stateData = this[stateName]();
+    const stateData = (stateFn as () => Partial<Modules.EntityService.Params.Data.Input<TUID>>).call(this);
     const originalDefinition = this.definition.bind(this);
 
     this.definition = () => ({
@@ -67,9 +67,5 @@ export default class Factory {
    * Get the model identifier
    * @returns {string}
    */
-  get model() {
-    throw new Error('Model property must be defined in factory');
-  }
+  abstract get model(): TUID;
 }
-
-module.exports = Factory;
