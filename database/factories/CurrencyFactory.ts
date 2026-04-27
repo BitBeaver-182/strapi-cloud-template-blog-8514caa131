@@ -1,8 +1,9 @@
+import { CURRENCY_UID } from '../../src/api/currency/constants';
 import Factory from './Factory';
 
-export default class CurrencyFactory extends Factory<'api::currency.currency'> {
-  get model() {
-    return 'api::currency.currency' as const;
+export default class CurrencyFactory extends Factory<typeof CURRENCY_UID> {
+  get uid(): typeof CURRENCY_UID {
+    return CURRENCY_UID;
   }
 
   definition() {
@@ -15,4 +16,3 @@ export default class CurrencyFactory extends Factory<'api::currency.currency'> {
     };
   }
 }
-

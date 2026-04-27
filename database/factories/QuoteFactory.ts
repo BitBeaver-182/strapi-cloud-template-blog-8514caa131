@@ -1,8 +1,9 @@
+import { QUOTE_UID } from '../../src/api/quote/constants';
 import Factory from './Factory';
 
-export default class QuoteFactory extends Factory<'api::quote.quote'> {
-  get model() {
-    return 'api::quote.quote' as const;
+export default class QuoteFactory extends Factory<typeof QUOTE_UID> {
+  get uid(): typeof QUOTE_UID {
+    return QUOTE_UID;
   }
 
   definition() {
@@ -16,10 +17,9 @@ export default class QuoteFactory extends Factory<'api::quote.quote'> {
       quote_status: this.faker.helpers.arrayElement(['pending', 'accepted', 'rejected']),
       notes: this.faker.lorem.paragraph(),
       total: {
-        amount: String(this.faker.number.int({ min: 1000, max: 50000 })),
+        amount: this.faker.number.int({ min: 1000, max: 50000 }),
         currency_code: this.faker.helpers.arrayElement(['USD', 'EUR', 'CNY', 'HUF']),
       },
     };
   }
 }
-

@@ -45,8 +45,8 @@ Create a new factory by extending the `Factory` class:
 import Factory from './Factory';
 
 export default class ProductFactory extends Factory {
-  get model(): string {
-    return 'api::product.product'; // Your Strapi model
+  get uid() {
+    return 'api::product.product' as const; // Your Strapi content-type UID
   }
 
   definition(): Record<string, unknown> {
@@ -179,9 +179,9 @@ See [Faker.js documentation](https://fakerjs.dev/) for all available methods.
 
 ```typescript
 // In your seeder
-const users = await this.strapi.entityService.findMany(
+const users = await this.strapi.documents(
   'plugin::users-permissions.user'
-);
+).findMany();
 
 const currency = await this.factory('CurrencyFactory').create({
   code: 'EUR',
@@ -193,10 +193,9 @@ const currency = await this.factory('CurrencyFactory').create({
 
 ```typescript
 async run() {
-  const existingUsers = await this.strapi.entityService.findMany(
-    'plugin::users-permissions.user',
-    { limit: 1 }
-  );
+  const existingUsers = await this.strapi.documents(
+    'plugin::users-permissions.user'
+  ).findMany({ limit: 1 });
 
   if (existingUsers.length === 0) {
     await this.factory('UserFactory').createMany(10);
@@ -234,7 +233,7 @@ definition() {
 Make sure your factory file ends with `Factory.ts` and is in the `database/factories/` directory.
 
 ### "Model not found" error
-Ensure the model identifier in `get model()` matches your Strapi content type exactly (e.g., `api::currency.currency`).
+Ensure the UID in `get uid()` matches your Strapi content type exactly (e.g., `api::currency.currency`).
 
 ### Strapi not loading
 Make sure Strapi is properly configured and your database is accessible.

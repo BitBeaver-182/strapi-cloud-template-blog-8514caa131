@@ -815,6 +815,7 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
         minLength: 3;
       }>;
     phone_number: Schema.Attribute.String &
+      Schema.Attribute.Required &
       Schema.Attribute.CustomField<'plugin::strapi-phone-validator-5.phone'>;
     publishedAt: Schema.Attribute.DateTime;
     quotes: Schema.Attribute.Relation<'oneToMany', 'api::quote.quote'>;

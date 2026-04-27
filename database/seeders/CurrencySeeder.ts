@@ -1,3 +1,4 @@
+import { CURRENCY_UID } from '../../src/api/currency/constants';
 import Seeder from './Seeder';
 
 export default class CurrencySeeder extends Seeder {
@@ -12,15 +13,12 @@ export default class CurrencySeeder extends Seeder {
     ] as const;
 
     for (const currency of currencies) {
-      const existing = await this.strapi.entityService.findMany('api::currency.currency', {
+      const existing = await this.strapi.documents(CURRENCY_UID).findFirst({
         filters: { code: currency.code },
-        limit: 1,
       });
-
-      const first = Array.isArray(existing) ? existing[0] : null;
-
-      if (first) {
-        await this.strapi.entityService.update('api::currency.currency', first.id, {
+      if (existing) {
+        await this.strapi.documents(CURRENCY_UID).update({
+          documentId: existing.documentId,
           data: {
             symbol: currency.symbol,
             decimals: currency.decimals,
@@ -29,7 +27,7 @@ export default class CurrencySeeder extends Seeder {
         continue;
       }
 
-      await this.strapi.entityService.create('api::currency.currency', {
+      await this.strapi.documents(CURRENCY_UID).create({
         data: {
           code: currency.code,
           symbol: currency.symbol,
@@ -41,4 +39,3 @@ export default class CurrencySeeder extends Seeder {
     this.log(`Ensured ${currencies.length} currencies`);
   }
 }
-

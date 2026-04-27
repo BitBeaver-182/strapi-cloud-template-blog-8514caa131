@@ -23,7 +23,8 @@
     },
     "phone_number": {
       "type": "customField",
-      "customField": "plugin::strapi-phone-validator-5.phone"
+      "customField": "plugin::strapi-phone-validator-5.phone",
+      "required": true
     },
     "email": {
       "type": "email"

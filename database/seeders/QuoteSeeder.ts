@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import type { Modules } from '@strapi/types';
+import { QUOTE_UID } from '../../src/api/quote/constants';
+import { SUPPLIER_UID } from '../../src/api/supplier/constants';
 import Seeder from './Seeder';
 
 type UploadedFile = { id: number };
@@ -49,20 +52,26 @@ export default class QuoteSeeder extends Seeder {
     this.log('Seeding quotes...');
 
     const targetQuotes = 20;
-    const existingCount = await this.strapi.entityService.count('api::quote.quote');
+    const existingQuotes = await this.strapi.documents(QUOTE_UID).findMany({
+      fields: ['documentId'],
+      limit: targetQuotes,
+    });
+    const existingCount = existingQuotes.length;
     const remaining = Math.max(0, targetQuotes - existingCount);
     if (remaining === 0) {
       this.log(`Quotes already exist (${existingCount}). Nothing to do.`);
       return;
     }
 
-    const suppliers = await this.strapi.entityService.findMany('api::supplier.supplier', {
-      fields: ['id', 'name'],
+    const suppliers = await this.strapi.documents(SUPPLIER_UID).findMany({
+      fields: ['documentId', 'name'],
       sort: ['name:asc'],
       limit: 100,
     });
 
-    const supplierList = Array.isArray(suppliers) ? suppliers : [];
+    const supplierList = suppliers.filter((supplier) => {
+      return typeof supplier.documentId === 'string' && supplier.documentId.length > 0;
+    });
     if (supplierList.length === 0) {
       this.log('No suppliers found. Skipping quote seeding.');
       return;
@@ -101,18 +110,22 @@ export default class QuoteSeeder extends Seeder {
       const pdfId = uploadedPdfIds.length > 0 ? uploadedPdfIds[i % uploadedPdfIds.length] : undefined;
       const notes = [
         base.notes ?? '',
-        `Supplier: ${supplier.name}`,
+        `Supplier: ${supplier.name ?? 'Unknown supplier'}`,
         'Models: Apple Cabin (LUX/TERRA/LUNA), Harmonia (START/COMFORT/PREMIUM), House AURA',
       ]
         .filter((x) => typeof x === 'string' && x.trim().length > 0)
         .join('\n');
 
-      await this.strapi.entityService.create('api::quote.quote', {
+      const quoteData: Modules.Documents.Params.Data.Input<typeof QUOTE_UID> = {
+        ...base,
+        notes,
+        supplier: { documentId: supplier.documentId },
+        ...(pdfId ? { pdf: { id: pdfId } } : {}),
+      };
+
+      await this.strapi.documents(QUOTE_UID).create({
         data: {
-          ...base,
-          notes,
-          supplier: supplier.id,
-          ...(pdfId ? { pdf: pdfId } : {}),
+          ...quoteData,
         },
       });
     }
@@ -120,4 +133,3 @@ export default class QuoteSeeder extends Seeder {
     this.log(`Created ${remaining} quotes (target: ${targetQuotes})`);
   }
 }
-

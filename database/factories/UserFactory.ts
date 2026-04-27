@@ -1,8 +1,12 @@
+import type { UID } from '@strapi/types';
 import Factory from './Factory';
 
-export default class UserFactory extends Factory<'plugin::users-permissions.user'> {
-  get model() {
-    return 'plugin::users-permissions.user' as const;
+const USERS_PERMISSIONS_USER_UID =
+  'plugin::users-permissions.user' satisfies UID.ContentType;
+
+export default class UserFactory extends Factory<typeof USERS_PERMISSIONS_USER_UID> {
+  get uid(): typeof USERS_PERMISSIONS_USER_UID {
+    return USERS_PERMISSIONS_USER_UID;
   }
 
   definition() {
@@ -44,4 +48,3 @@ export default class UserFactory extends Factory<'plugin::users-permissions.user
     };
   }
 }
-

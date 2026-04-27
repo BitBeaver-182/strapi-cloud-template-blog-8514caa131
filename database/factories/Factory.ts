@@ -11,20 +11,22 @@ export default abstract class Factory<TUID extends UID.ContentType> {
     this.faker = faker;
   }
 
+  abstract get uid(): TUID;
+
   /**
    * Define the model's default state
    * @returns {Object}
    */
-  abstract definition(): Modules.EntityService.Params.Data.Input<TUID>;
+  abstract definition(): Modules.Documents.Params.Data.Input<TUID>;
 
   /**
    * Create a single entry
    * @param {Object} attributes - Override attributes
    * @returns {Promise<Object>}
    */
-  async create(attributes: Partial<Modules.EntityService.Params.Data.Input<TUID>> = {}) {
+  async create(attributes: Partial<Modules.Documents.Params.Data.Input<TUID>> = {}) {
     const data = { ...this.definition(), ...attributes };
-    return await this.strapi.entityService.create(this.model, { data });
+    return await this.strapi.documents(this.uid).create({ data });
   }
 
   /**
@@ -33,7 +35,7 @@ export default abstract class Factory<TUID extends UID.ContentType> {
    * @param {Object} attributes - Override attributes
    * @returns {Promise<Array>}
    */
-  async createMany(count: number, attributes: Partial<Modules.EntityService.Params.Data.Input<TUID>> = {}) {
+  async createMany(count: number, attributes: Partial<Modules.Documents.Params.Data.Input<TUID>> = {}) {
     const promises: Array<ReturnType<typeof this.create>> = [];
     for (let i = 0; i < count; i++) {
       promises.push(this.create(attributes));
@@ -52,7 +54,7 @@ export default abstract class Factory<TUID extends UID.ContentType> {
       throw new Error(`State "${stateName}" does not exist`);
     }
 
-    const stateData = (stateFn as () => Partial<Modules.EntityService.Params.Data.Input<TUID>>).call(this);
+    const stateData = (stateFn as () => Partial<Modules.Documents.Params.Data.Input<TUID>>).call(this);
     const originalDefinition = this.definition.bind(this);
 
     this.definition = () => ({
@@ -62,10 +64,4 @@ export default abstract class Factory<TUID extends UID.ContentType> {
 
     return this;
   }
-
-  /**
-   * Get the model identifier
-   * @returns {string}
-   */
-  abstract get model(): TUID;
 }
